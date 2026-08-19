@@ -37,4 +37,13 @@
 </div>
 
 </div>
+</div>
+
+</div>
 <!-- End Page Wrapper -->
+
+<?php wp_footer(); ?>
+
+</body>
+
+</html>

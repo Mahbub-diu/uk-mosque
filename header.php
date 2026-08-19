@@ -191,3 +191,6 @@
             <!-- End Sticky Menu -->
         </header>
         <!--End Main Header -->
+
+        <div id="smooth-wrapper">
+            <div id="smooth-content">

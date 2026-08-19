@@ -37,27 +37,27 @@ function uk_mosque_enqueue_scripts()
 
     wp_enqueue_script('enq-ripple-2', get_template_directory_uri() . '/assets/js/ripple-2.js', array(), $version, true);
 
-    wp_enqueue_script('gsap', get_template_directory_uri() . '/assetsjs/gsap.min.js', array(), null, true);
+    wp_enqueue_script('gsap', get_template_directory_uri() . '/assets/js/gsap.min.js', array(), null, true);
 
-    wp_enqueue_script('three', get_template_directory_uri() . '/assetsjs/three.js', array(), null, true);
+    wp_enqueue_script('three', get_template_directory_uri() . '/assets/js/three.js', array(), null, true);
 
-    wp_enqueue_script('gsap-scrolltrigger', get_template_directory_uri() . '/assetsjs/ScrollTrigger.min.js', array('gsap'), null, true);
+    wp_enqueue_script('gsap-scrolltrigger', get_template_directory_uri() . '/assets/js/ScrollTrigger.min.js', array('gsap'), null, true);
 
-    wp_enqueue_script('split-type', get_template_directory_uri() . '/assetsjs/splitType.js', array(), null, true);
+    wp_enqueue_script('split-type', get_template_directory_uri() . '/assets/js/splitType.js', array(), null, true);
 
-    wp_enqueue_script('gsap-scrollsmoother', get_template_directory_uri() . '/assetsjs/gsap-scroll-smoother.js', array('gsap', 'gsap-scrolltrigger'), null, true);
+    wp_enqueue_script('gsap-scrollsmoother', get_template_directory_uri() . '/assets/js/gsap-scroll-smoother.js', array('gsap', 'gsap-scrolltrigger'), null, true);
 
-    wp_enqueue_script('gsap-scrollto', get_template_directory_uri() . '/assetsjs/gsap-scroll-to-plugin.js', array('gsap'), null, true);
+    wp_enqueue_script('gsap-scrollto', get_template_directory_uri() . '/assets/js/gsap-scroll-to-plugin.js', array('gsap'), null, true);
 
-    wp_enqueue_script('splittext', get_template_directory_uri() . '/assetsjs/SplitText.min.js', array('gsap'), null, true);
+    wp_enqueue_script('splittext', get_template_directory_uri() . '/assets/js/SplitText.min.js', array('gsap'), null, true);
 
-    wp_enqueue_script('wow', get_template_directory_uri() . '/assetsjs/wow.js', array(), null, true);
+    wp_enqueue_script('wow', get_template_directory_uri() . '/assets/js/wow.js', array(), null, true);
 
-    wp_enqueue_script('aos', get_template_directory_uri() . '/assetsjs/aos.js', array(), null, true);
+    wp_enqueue_script('aos', get_template_directory_uri() . '/assets/js/aos.js', array(), null, true);
 
-    wp_enqueue_script('theme-script', get_template_directory_uri() . '/assetsjs/script.js', array('jquery'), null, true);
+    wp_enqueue_script('theme-script', get_template_directory_uri() . '/assets/js/script.js', array('jquery'), null, true);
 
-    wp_enqueue_script('custom-gsap', get_template_directory_uri() . '/assetsjs/custom-gsap.js', array('gsap', 'gsap-scrolltrigger', 'split-type', 'gsap-scrollsmoother', 'gsap-scrollto', 'splittext'), null, true);
+    wp_enqueue_script('custom-gsap', get_template_directory_uri() . '/assets/js/custom-gsap.js', array('gsap', 'gsap-scrolltrigger', 'split-type', 'gsap-scrollsmoother', 'gsap-scrollto', 'splittext'), null, true);
 
     // enqueue scripts ends here 
 }
