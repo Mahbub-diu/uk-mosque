@@ -4,7 +4,9 @@
         <div class="container">
             <div class="inner-box">
                 <div class="logo wow fadeInUp" data-wow-delay=".2s">
-                    <a href="index.html"><img src="images/footer/footer-one-logo.png" alt="Logo"></a>
+                    <a href="index.html">
+                        <img src="<?php echo get_template_directory_uri(); ?>/assets/images/footer/footer-one-logo.png"
+                            alt="Logo"></a>
                 </div>
                 <p class="text wow fadeInUp" data-wow-delay=".4s">Islamus is a place of faith, learning, and community.
                     We’re dedicated to inspiring spiritual growth, unity, and compassion through prayer, education, and
@@ -30,7 +32,7 @@
             </div>
         </div>
         <div class="sec-bg">
-            <img src="images/footer/footer-one-bg.png" alt="Image">
+            <img src="<?php echo get_template_directory_uri(); ?>/assets/images/footer/footer-one-bg.png" alt="Image">
         </div>
     </footer>
     <!--End Main Footer -->
@@ -43,7 +45,6 @@
 <!-- End Page Wrapper -->
 
 <?php wp_footer(); ?>
-
 </body>
 
 </html>

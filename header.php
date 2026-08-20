@@ -38,7 +38,9 @@
                         <div class="main-box">
                             <div class="logo-box">
                                 <div class="logo">
-                                    <a href="index.html"><img src="images/logo.png" alt="Logo"></a>
+                                    <a href="index.html">
+                                        <img src="<?php echo get_template_directory_uri(); ?>/assets/images/logo.png"
+                                            alt="Logo"></a>
                                 </div>
                             </div>
 
@@ -46,68 +48,35 @@
                             <div class="nav-outer">
                                 <nav class="nav main-menu">
                                     <ul class="navigation">
-                                        <li class="dropdown current">
-                                            <a href="index.html">Home</a>
-                                            <ul>
-                                                <li><a href="index.html">Home One</a></li>
-                                                <li><a href="index-2.html">Home Two</a></li>
-                                                <li><a href="index-3.html">Home Three</a></li>
-                                                <li><a href="index-4.html">Home Four</a></li>
-                                                <li><a href="index-5.html">Home Five</a></li>
-                                            </ul>
+                                        <li class="current">
+                                            <a href="#">Home</a>
+
                                         </li>
-                                        <li class="dropdown">
-                                            <a href="#">Pages</a>
-                                            <ul>
-                                                <li><a href="page-about.html">About</a></li>
-                                                <li class="dropdown"><a href="#">Team</a>
-                                                    <ul>
-                                                        <li><a href="page-team.html">Team List</a></li>
-                                                        <li><a href="page-team-details.html">Team Details</a></li>
-                                                    </ul>
-                                                </li>
-                                                <li class="dropdown"><a href="#">Shop</a>
-                                                    <ul>
-                                                        <li><a href="shop-products.html">Products</a></li>
-                                                        <li><a href="shop-products-sidebar.html">Products with
-                                                                Sidebar</a></li>
-                                                        <li><a href="shop-product-details.html">Product Details</a></li>
-                                                        <li><a href="shop-cart.html">Cart</a></li>
-                                                        <li><a href="shop-checkout.html">Checkout</a></li>
-                                                    </ul>
-                                                </li>
-                                                <li><a href="page-testimonial.html">Testimonials</a></li>
-                                                <li><a href="page-faq.html">Faq</a></li>
-                                                <li><a href="page-404.html">Error 404</a></li>
-                                            </ul>
+                                        <li><a href="#">About</a></li>
+                                        <li><a href="#">Services</a></li>
+
+
+                                        <li>
+                                            <a href="#">Events</a>
+
                                         </li>
-                                        <li class="dropdown"><a href="#">Donation</a>
-                                            <ul>
-                                                <li><a href="page-causes.html">Donation Page</a></li>
-                                                <li><a href="page-causes-details.html">Donation Details</a></li>
-                                            </ul>
-                                        </li>
-                                        <li class="dropdown"><a href="#">Events</a>
-                                            <ul>
-                                                <li><a href="page-events.html">Event Page</a></li>
-                                                <li><a href="page-event-details.html">Event Details</a></li>
-                                            </ul>
-                                        </li>
-                                        <li class="dropdown">
+                                        <li>
                                             <a href="#">News</a>
-                                            <ul>
-                                                <li><a href="news-grid.html">News Grid</a></li>
-                                                <li><a href="news-details.html">News Details</a></li>
-                                            </ul>
+
                                         </li>
-                                        <li><a href="page-contact.html">Contact</a></li>
+                                        <li>
+                                            <a href="#">Donation</a>
+
+                                        </li>
+                                        <li><a href="#">Contact</a></li>
                                     </ul>
                                 </nav>
                             </div>
 
                             <div class="action-box">
                                 <div class="contact-widget">
-                                    <a href="page-contact.html"><i class="icon fa-classic fa-solid fa-location-dot"></i>
+                                    <a href="page-contact.html">
+                                        <i class="icon fa-classic fa-solid fa-location-dot"></i>
                                         <span>1901
                                             Thornridge Shiloh, Hawaii 81063</span></a>
                                     <a href="tel:01750050088"><i class="icon fa-classic fa-solid fa-phone-volume"></i>
