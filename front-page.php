@@ -1,4 +1,18 @@
-<?php get_header(); ?>
+<?php
+
+/**
+ * Front Page Template
+ *
+ * @package uk-mosque
+ */
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+get_header();
+
+?>
 
 
 

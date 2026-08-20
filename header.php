@@ -17,6 +17,9 @@
     <meta charset="<?php echo esc_attr(get_bloginfo('charset')); ?>">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="<?php echo get_template_directory_uri(); ?>/assets/images/favicon.png"
+        type="image/x-icon">
+    <link rel="icon" href="<?php echo get_template_directory_uri(); ?>/assets/images/favicon.png" type="image/x-icon">
 
     <?php wp_head(); ?>
 
@@ -29,6 +32,12 @@
         <!-- Preloader Start -->
         <div class="preloader"></div>
 
+        <!-- Back-to-top start -->
+        <button id="back-top" class="back-to-top">
+            <i class="fa-regular fa-arrow-up"></i>
+        </button>
+        <!-- Back-to-top start -->
+
         <!-- Main Header-->
         <header class="main-header header-style-one">
             <div class="outer-container">
@@ -38,7 +47,7 @@
                         <div class="main-box">
                             <div class="logo-box">
                                 <div class="logo">
-                                    <a href="index.html">
+                                    <a href="<?php echo esc_url(home_url('/')); ?>">
                                         <img src="<?php echo get_template_directory_uri(); ?>/assets/images/logo.png"
                                             alt="Logo"></a>
                                 </div>
