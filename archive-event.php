@@ -1,9 +1,7 @@
 <?php
 
 /**
- * Template Name: Events
- *
- * Event Archive Template
+ * 
  *
  * @package uk-mosque
  */
@@ -14,6 +12,9 @@ if (!defined('ABSPATH')) {
 
 get_header();
 
+$page_title = post_type_archive_title('', false);
+
+
 ?>
 
 <!-- Start main-content -->
@@ -23,7 +24,9 @@ get_header();
     </div>
     <div class="auto-container">
         <div class="title-outer text-center">
-            <div class="h1 title">Events</div>
+            <div class="h1 title">
+                <?php post_type_archive_title(); ?>
+            </div>
             <ul class="page-breadcrumb">
                 <li><a href="<?php echo esc_url(home_url('/')); ?>">Home</a></li>
                 <li>Events</li>

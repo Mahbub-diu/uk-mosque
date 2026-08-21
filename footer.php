@@ -7,14 +7,31 @@
         <div class="container">
             <div class="inner-box">
                 <div class="logo">
-                    <a href="#">
-                        <img src="<?php echo get_template_directory_uri(); ?>/assets/images/logo-2.png" alt="Logo"></a>
+                    <a href="<?php echo esc_html(home_url('/')); ?>">
+                        <img src="<?php echo get_template_directory_uri(); ?>/assets/images/logo-2.png" alt="Logo">
+                    </a>
                 </div>
                 <ul class="social-list">
-                    <li><a href="#0"><i class="fa-brands fa-facebook-f"></i></a></li>
-                    <li><a href="#0"><i class="fa-brands fa-x-twitter"></i></a></li>
-                    <li><a href="#0"><i class="fa-brands fa-pinterest-p"></i></a></li>
-                    <li><a href="#0"><i class="fa-brands fa-youtube"></i></a></li>
+                    <li>
+                        <a href="<?php echo esc_attr(get_theme_mod('mosque_facebook')); ?>">
+                            <i class="fa-brands fa-facebook-f"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?php echo esc_attr(get_theme_mod('mosque_twitter')); ?>">
+                            <i class="fa-brands fa-x-twitter"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?php echo esc_attr(get_theme_mod('mosque_instagram')); ?>">
+                            <i class="icon fab fa-instagram"> </i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="<?php echo esc_attr(get_theme_mod('mosque_youtube')); ?>">
+                            <i class="icon  fab fa-youtube"> </i>
+                        </a>
+                    </li>
                 </ul>
             </div>
             <div class="row">
@@ -65,21 +82,57 @@
                         </div>
                         <div class="footer-column">
                             <div class="footer-widget">
-                                <div class="h6 widget-title">Address</div>
+
+                                <div class="h6 widget-title">
+                                    <?php esc_html_e('Address', 'uk-mosque'); ?>
+                                </div>
+
                                 <div class="widget-content">
+
+                                    <!-- Address -->
                                     <div class="address-one">
                                         <div class="icon fa-sharp fa-solid fa-location-dot"></div>
-                                        <div class="text">1901 Thornridge Cir. Shiloh <br> Hawaii 81063</div>
-                                    </div>
-                                    <div class="h6 widget-title mb-20">Phone & Email</div>
-                                    <div class="address-one">
-                                        <div class="icon fa-sharp fa-solid fa-location-dot"></div>
-                                        <div class="text"><a href="tel:+8801750050088">+629 555-0129</a> <br> <a
-                                                href="https://html.kodesolution.com/cdn-cgi/l/email-protection#91f5f4fcfed1f4e9f0fce1fdf4bff2fefc"><span
-                                                    class="__cf_email__"
-                                                    data-cfemail="6c080901032c09140d011c0009420f0301">[email&#160;protected]</span></a>
+
+                                        <div class="text">
+                                            <?php echo esc_html(get_theme_mod('mosque_address')); ?>
                                         </div>
                                     </div>
+
+
+                                    <!-- Phone & Email -->
+                                    <div class="h6 widget-title mb-20">
+                                        <?php esc_html_e('Phone & Email', 'uk-mosque'); ?>
+                                    </div>
+
+                                    <div class="address-one">
+                                        <div class="icon fa-sharp fa-solid fa-phone-volume"></div>
+
+                                        <div class="text">
+
+                                            <?php
+                                            $phone = get_theme_mod('mosque_phone');
+                                            $email = get_theme_mod('mosque_email');
+                                            ?>
+
+                                            <?php if ($phone) : ?>
+                                                <a href="tel:<?php echo esc_attr($phone); ?>">
+                                                    <?php echo esc_html($phone); ?>
+                                                </a>
+                                            <?php endif; ?>
+
+                                            <?php if ($phone && $email) : ?>
+                                                <br>
+                                            <?php endif; ?>
+
+                                            <?php if ($email) : ?>
+                                                <a href="mailto:<?php echo esc_attr($email); ?>">
+                                                    <?php echo esc_html($email); ?>
+                                                </a>
+                                            <?php endif; ?>
+
+                                        </div>
+                                    </div>
+
                                 </div>
                             </div>
                         </div>
@@ -89,7 +142,8 @@
         </div>
         <div class="bottom-bar">
             <div class="container">
-                <p class="copyright-text">© 2026 <a href="index.html">Islamus</a>. All Rights Reserved.</p>
+                <p class="copyright-text">© 2026 <a href="<?php echo esc_url(home_url('/')); ?>">Islamus</a>. All Rights
+                    Reserved.</p>
             </div>
         </div>
     </footer>

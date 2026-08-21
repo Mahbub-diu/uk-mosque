@@ -1,0 +1,77 @@
+/**
+ * Admin styles for the "Event Details" metabox.
+ * Enqueued only on the Event post type edit screens.
+ */
+
+#uk_mosque_event_details .inside {
+    margin: 0;
+    padding: 0;
+}
+
+#uk_mosque_event_details .common-metabox-field {
+    padding: 12px;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+#uk_mosque_event_details .common-metabox-field:last-child {
+    border-bottom: none;
+}
+
+#uk_mosque_event_details .common-metabox-field label {
+    display: block;
+    margin-bottom: 6px;
+}
+
+#uk_mosque_event_details .common-metabox-field label strong {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: #1d2327;
+}
+
+#uk_mosque_event_details .common-metabox-field input[type="date"],
+#uk_mosque_event_details .common-metabox-field input[type="time"],
+#uk_mosque_event_details .common-metabox-field input[type="text"] {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 6px 8px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    background-color: #fff;
+    font-size: 13px;
+    line-height: 1.4;
+    box-shadow: 0 0 0 transparent;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+#uk_mosque_event_details .common-metabox-field input[type="date"]:hover,
+#uk_mosque_event_details .common-metabox-field input[type="time"]:hover,
+#uk_mosque_event_details .common-metabox-field input[type="text"]:hover {
+    border-color: #6c7075;
+}
+
+#uk_mosque_event_details .common-metabox-field input[type="date"]:focus,
+#uk_mosque_event_details .common-metabox-field input[type="time"]:focus,
+#uk_mosque_event_details .common-metabox-field input[type="text"]:focus {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+    outline: none;
+}
+
+.common-metabox-flex {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+
+}
+
+@media(max-width: 991px) {
+    .common-metabox-flex {
+
+        grid-template-columns: repeat(1, 1fr);
+
+    }
+}

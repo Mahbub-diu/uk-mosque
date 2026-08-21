@@ -47,38 +47,33 @@
                         <div class="main-box">
                             <div class="logo-box">
                                 <div class="logo">
-                                    <a href="<?php echo esc_url(home_url('/')); ?>">
-                                        <img src="<?php echo get_template_directory_uri(); ?>/assets/images/logo.png"
-                                            alt="Logo"></a>
+                                    <?php
+                                    if (has_custom_logo()) {
+                                        the_custom_logo();
+                                    } else {
+                                    ?>
+                                        <a href="<?php echo esc_url(home_url('/')); ?>">
+                                            <img src="<?php echo esc_url(get_template_directory_uri()); ?>/assets/images/logo.png"
+                                                alt="<?php bloginfo('name'); ?>">
+                                        </a>
+                                    <?php
+                                    }
+                                    ?>
                                 </div>
                             </div>
 
                             <!--Nav Box-->
                             <div class="nav-outer">
                                 <nav class="nav main-menu">
-                                    <ul class="navigation">
-                                        <li class="current">
-                                            <a href="#">Home</a>
-
-                                        </li>
-                                        <li><a href="#">About</a></li>
-                                        <li><a href="#">Services</a></li>
-
-
-                                        <li>
-                                            <a href="#">Events</a>
-
-                                        </li>
-                                        <li>
-                                            <a href="#">News</a>
-
-                                        </li>
-                                        <li>
-                                            <a href="#">Donation</a>
-
-                                        </li>
-                                        <li><a href="#">Contact</a></li>
-                                    </ul>
+                                    <?php
+                                    wp_nav_menu(
+                                        array(
+                                            'theme_location' => 'primary_menu',
+                                            'menu_class'     => 'navigation',
+                                            'fallback_cb'    => false,
+                                        )
+                                    );
+                                    ?>
                                 </nav>
                             </div>
 
@@ -86,13 +81,20 @@
                                 <div class="contact-widget">
                                     <a href="page-contact.html">
                                         <i class="icon fa-classic fa-solid fa-location-dot"></i>
-                                        <span>1901
-                                            Thornridge Shiloh, Hawaii 81063</span></a>
-                                    <a href="tel:01750050088"><i class="icon fa-classic fa-solid fa-phone-volume"></i>
-                                        <span>+17 5005
-                                            0088</span></a>
+                                        <span>
+                                            <?php echo esc_html(get_theme_mod('mosque_address')); ?>
+                                        </span>
+                                    </a>
+                                    <a href="tel:<?php echo esc_attr(get_theme_mod('mosque_phone')); ?>">
+                                        <i class="icon fa-classic fa-solid fa-phone-volume"></i>
+                                        <span>
+                                            <?php echo esc_html(get_theme_mod('mosque_phone')); ?>
+                                        </span>
+                                    </a>
                                 </div>
-                                <a href="page-contact.html" class="btn-style-five">Prayer Time</a>
+                                <a href="<?php echo esc_url(home_url('/prayer-times/')); ?>" class="btn-style-five">
+                                    <?php echo esc_html__('Prayer Time', 'uk-mosque'); ?>
+                                </a>
 
                                 <!-- Mobile Nav toggler -->
                                 <div class="mobile-nav-toggler">
@@ -111,7 +113,10 @@
                 <nav class="menu-box">
                     <div class="upper-box">
                         <div class="nav-logo">
-                            <a href="index.html"><img src="images/logo-2.png" alt=""></a>
+                            <a href="<?php echo esc_url(home_url('/')); ?>">
+                                <img src="<?php echo esc_url(get_template_directory_uri()); ?>/assets/images/logo-2.png"
+                                    alt="<?php bloginfo('name'); ?>">
+                            </a>
                         </div>
                         <div class="close-btn"><i class="icon fa fa-times"></i></div>
                     </div>
@@ -122,18 +127,44 @@
                         <li>
                             <i class="icon lnr-icon-envelope1"></i>
                             <span class="title">Send Email</span>
-                            <div class="text"><a
-                                    href="https://html.kodesolution.com/cdn-cgi/l/email-protection#5a363b2d2935341a3f223b372a363f74393537"><span
-                                        class="__cf_email__"
-                                        data-cfemail="b8d9d4d5d996d4d9cfcbd7d6f8ddc0d9d5c8d4dd96dbd7d5">[email&#160;protected]</span></a>
+                            <div class="text">
+                                <a href="#">
+                                    <span class="__cf_email__" data-cfemail="">
+                                        <?php echo esc_html(get_theme_mod('mosque_email'));  ?>
+                                    </span>
+                                </a>
                             </div>
                         </li>
                     </ul>
                     <ul class="social-links">
-                        <li><a href="#"><i class="icon fab fa-twitter"></i></a></li>
-                        <li><a href="#"><i class="icon fab fa-facebook-f"></i></a></li>
-                        <li><a href="#"><i class="icon fab fa-pinterest-p"></i></a></li>
-                        <li><a href="#"><i class="icon fab fa-vimeo-v"></i></a></li>
+                        <li>
+                            <a href="<?php echo esc_attr(get_theme_mod('mosque_twitter')); ?>">
+                                <i class="icon fab fa-twitter">
+
+                                </i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="<?php echo esc_attr(get_theme_mod('mosque_facebook')); ?>">
+                                <i class="icon fab fa-facebook-f">
+
+                                </i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="<?php echo esc_attr(get_theme_mod('mosque_instagram')); ?>">
+                                <i class="icon fab fa-instagram">
+
+                                </i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="<?php echo esc_attr(get_theme_mod('mosque_youtube')); ?>">
+                                <i class="icon  fab fa-youtube">
+
+                                </i>
+                            </a>
+                        </li>
                     </ul>
                 </nav>
             </div>
@@ -145,7 +176,18 @@
                     <div class="inner-container">
                         <!--Logo-->
                         <div class="logo">
-                            <a href="index.html"><img src="images/logo.png" alt=""></a>
+                            <?php
+                            if (has_custom_logo()) {
+                                the_custom_logo();
+                            } else {
+                            ?>
+                                <a href="<?php echo esc_url(home_url('/')); ?>">
+                                    <img src="<?php echo esc_url(get_template_directory_uri()); ?>/assets/images/logo.png"
+                                        alt="<?php bloginfo('name'); ?>">
+                                </a>
+                            <?php
+                            }
+                            ?>
                         </div>
 
                         <!--Right Col-->

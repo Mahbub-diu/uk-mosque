@@ -23,6 +23,13 @@ function uk_mosque_theme_setup()
             'style',
         )
     );
+
+
+    register_nav_menus(
+        array(
+            'primary_menu' => __('Primary Menu', 'uk-mosque'),
+        )
+    );
 }
 
 add_action('after_setup_theme', 'uk_mosque_theme_setup');
