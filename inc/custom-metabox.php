@@ -56,6 +56,12 @@ function uk_mosque_event_details_callback($post)
         true
     );
 
+    $event_topic = get_post_meta(
+        $post->ID,
+        '_event_topic',
+        true
+    );
+
     $event_start = get_post_meta(
         $post->ID,
         '_event_start',
@@ -93,6 +99,18 @@ function uk_mosque_event_details_callback($post)
         </label>
 
         <input type="text" id="event_location" name="event_location" value="<?php echo esc_attr($event_location); ?>">
+
+    </div>
+
+    <div class="common-metabox-field">
+
+        <label for="event_topic">
+            <strong>
+                <?php esc_html_e('Event Topic', 'uk-mosque'); ?>
+            </strong>
+        </label>
+
+        <input type="text" id="event_topic" name="event_topic" value="<?php echo esc_attr($event_topic); ?>">
 
     </div>
 
@@ -196,6 +214,18 @@ function uk_mosque_save_event_details($post_id)
     }
 
 
+    if (isset($_POST['event_topic'])) {
+
+        update_post_meta(
+            $post_id,
+            '_event_topic',
+            sanitize_text_field(
+                wp_unslash($_POST['event_topic'])
+            )
+        );
+    }
+
+
     if (isset($_POST['event_start'])) {
 
         update_post_meta(
@@ -229,21 +259,31 @@ add_action(
 
 /**
  * =========================================================
- * Event Admin CSS
+ *  Admin CSS
  * =========================================================
  */
 
-function uk_mosque_event_admin_styles($hook)
+function uk_mosque_admin_styles($hook)
 {
     global $post_type;
 
+
+
     if (
-        $post_type !== 'event' ||
+        !in_array(
+            $post_type,
+            array(
+                'event',
+                'donation',
+            ),
+            true
+        )
+        ||
         !in_array(
             $hook,
             array(
                 'post.php',
-                'post-new.php'
+                'post-new.php',
             ),
             true
         )
@@ -253,7 +293,7 @@ function uk_mosque_event_admin_styles($hook)
 
 
     wp_enqueue_style(
-        'uk-mosque-event-admin',
+        'uk-mosque-admin',
         get_template_directory_uri() . '/assets/css/admin/admin-events.css',
         array(),
         '1.0.0'
@@ -262,5 +302,186 @@ function uk_mosque_event_admin_styles($hook)
 
 add_action(
     'admin_enqueue_scripts',
-    'uk_mosque_event_admin_styles'
+    'uk_mosque_admin_styles'
 );
+
+/**
+ * Donation Details Metabox Callback
+ */
+
+
+function uk_mosque_donation_details_metabox()
+{
+    add_meta_box(
+        'uk_mosque_donation_details',
+        __('Donation Details', 'uk-mosque'),
+        'uk_mosque_donation_details_callback',
+        'donation',
+        'normal',
+        'high'
+    );
+}
+
+add_action('add_meta_boxes', 'uk_mosque_donation_details_metabox');
+
+function uk_mosque_donation_details_callback($post)
+{
+
+    wp_nonce_field(
+        'uk_mosque_save_donation_details',
+        'uk_mosque_donation_details_nonce'
+    );
+
+    $donation_goal_amount = get_post_meta(
+        $post->ID,
+        '_donation_goal_amount',
+        true
+    );
+
+    $donation_raised_amount = get_post_meta(
+        $post->ID,
+        '_donation_raised_amount',
+        true
+    );
+
+    $donation_start_date = get_post_meta(
+        $post->ID,
+        '_donation_start_date',
+        true
+    );
+
+    $donation_end_date = get_post_meta(
+        $post->ID,
+        '_donation_end_date',
+        true
+    );
+?>
+
+
+<!-- input will be here -->
+<div class="common-metabox-flex">
+    <div class="common-metabox-field">
+        <label for="donation_goal_amount">
+            <strong>
+                <?php esc_html_e('Goal Amount', 'uk-mosque') ?>
+            </strong>
+        </label>
+
+        <input type="number" id="donation_goal_amount" name="donation_goal_amount"
+            value="<?php echo esc_attr($donation_goal_amount) ?>" min="0" step="0.01">
+    </div>
+    <div class="common-metabox-field">
+        <label for="donation_raised_amount">
+            <strong><?php esc_html_e('Raised Amount', 'uk-mosque') ?> </strong>
+        </label>
+
+        <input type="number" id="donation_raised_amount" name="donation_raised_amount"
+            value="<?php echo esc_attr($donation_raised_amount) ?>" min="0" step="0.01">
+    </div>
+</div>
+
+<div class="common-metabox-flex">
+
+    <div class="common-metabox-field">
+        <label for="donation_start_date">
+            <strong><?php esc_html_e('Start Date', 'uk-mosque') ?> </strong>
+        </label>
+
+        <input type="date" id="donation_start_date" name="donation_start_date"
+            value="<?php echo esc_attr($donation_start_date) ?>">
+    </div>
+    <div class="common-metabox-field">
+        <label for="donation_end_date">
+            <strong><?php esc_html_e('end Date', 'uk-mosque') ?> </strong>
+        </label>
+
+        <input type="date" id="donation_end_date" name="donation_end_date"
+            value="<?php echo esc_attr($donation_end_date) ?>">
+    </div>
+</div>
+
+<?php
+}
+
+/**
+ * Save Donation Details
+ */
+
+function uk_mosque_save_donation_details($post_id)
+{
+
+    if (
+        !isset($_POST['uk_mosque_donation_details_nonce'])
+
+        ||
+
+        !wp_verify_nonce(
+            wp_unslash($_POST['uk_mosque_donation_details_nonce']),
+            'uk_mosque_save_donation_details'
+        )
+
+
+    ) {
+        return;
+    }
+
+    /**
+     * Prevent autosave
+     */
+
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+        return;
+    }
+
+    if (
+        !current_user_can(
+            'edit_post',
+            $post_id
+        )
+    ) {
+        return;
+    }
+
+
+    if (isset($_POST['donation_goal_amount'])) {
+        update_post_meta(
+            $post_id,
+            '_donation_goal_amount',
+            sanitize_text_field(
+                wp_unslash($_POST['donation_goal_amount'])
+            )
+        );
+    }
+
+    if (isset($_POST['donation_raised_amount'])) {
+        update_post_meta(
+            $post_id,
+            '_donation_raised_amount',
+            sanitize_text_field(
+                wp_unslash($_POST['donation_raised_amount'])
+            )
+        );
+    }
+
+    if (isset($_POST['donation_start_date'])) {
+        update_post_meta(
+            $post_id,
+            '_donation_start_date',
+            sanitize_text_field(
+                wp_unslash($_POST['donation_start_date'])
+            )
+        );
+    }
+
+    if (isset($_POST['donation_end_date'])) {
+        update_post_meta(
+            $post_id,
+            '_donation_end_date',
+            sanitize_text_field(
+                wp_unslash($_POST['donation_end_date'])
+            )
+        );
+    }
+}
+
+add_action('save_post_donation', 'uk_mosque_save_donation_details');

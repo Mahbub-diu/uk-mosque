@@ -8,21 +8,21 @@
     padding: 0;
 }
 
-#uk_mosque_event_details .common-metabox-field {
+.common-metabox-field {
     padding: 12px;
     border-bottom: 1px solid #f0f0f1;
 }
 
-#uk_mosque_event_details .common-metabox-field:last-child {
+.common-metabox-field:last-child {
     border-bottom: none;
 }
 
-#uk_mosque_event_details .common-metabox-field label {
+.common-metabox-field label {
     display: block;
     margin-bottom: 6px;
 }
 
-#uk_mosque_event_details .common-metabox-field label strong {
+.common-metabox-field label strong {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -33,9 +33,10 @@
     color: #1d2327;
 }
 
-#uk_mosque_event_details .common-metabox-field input[type="date"],
-#uk_mosque_event_details .common-metabox-field input[type="time"],
-#uk_mosque_event_details .common-metabox-field input[type="text"] {
+.common-metabox-field input[type="number"],
+.common-metabox-field input[type="date"],
+.common-metabox-field input[type="time"],
+.common-metabox-field input[type="text"] {
     width: 100%;
     box-sizing: border-box;
     padding: 6px 8px;
@@ -48,15 +49,17 @@
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-#uk_mosque_event_details .common-metabox-field input[type="date"]:hover,
-#uk_mosque_event_details .common-metabox-field input[type="time"]:hover,
-#uk_mosque_event_details .common-metabox-field input[type="text"]:hover {
+.common-metabox-field input[type="number"]:hover,
+.common-metabox-field input[type="date"]:hover,
+.common-metabox-field input[type="time"]:hover,
+.common-metabox-field input[type="text"]:hover {
     border-color: #6c7075;
 }
 
-#uk_mosque_event_details .common-metabox-field input[type="date"]:focus,
-#uk_mosque_event_details .common-metabox-field input[type="time"]:focus,
-#uk_mosque_event_details .common-metabox-field input[type="text"]:focus {
+.common-metabox-field input[type="number"]:focus,
+.common-metabox-field input[type="date"]:focus,
+.common-metabox-field input[type="time"]:focus,
+.common-metabox-field input[type="text"]:focus {
     border-color: #2271b1;
     box-shadow: 0 0 0 1px #2271b1;
     outline: none;
