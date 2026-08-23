@@ -63,9 +63,9 @@ $page_title = post_type_archive_title('', false);
 
             <?php if ($events_query->have_posts()) : ?>
 
-            <?php while ($events_query->have_posts()) : $events_query->the_post(); ?>
+                <?php while ($events_query->have_posts()) : $events_query->the_post(); ?>
 
-            <?php
+                    <?php
                     /**
                      * Event Meta Data
                      */
@@ -116,16 +116,16 @@ $page_title = post_type_archive_title('', false);
                     }
                     ?>
 
-            <div class="event-block">
-                <div class="inner-box">
+                    <div class="event-block">
+                        <div class="inner-box">
 
-                    <!-- Image -->
-                    <div class="image-box">
-                        <figure class="image">
+                            <!-- Image -->
+                            <div class="image-box">
+                                <figure class="image">
 
-                            <?php if (has_post_thumbnail()) : ?>
+                                    <?php if (has_post_thumbnail()) : ?>
 
-                            <?php
+                                        <?php
                                         the_post_thumbnail(
                                             'large',
                                             array(
@@ -135,7 +135,7 @@ $page_title = post_type_archive_title('', false);
                                             )
                                         );
                                         ?>
-                            <?php
+                                        <?php
                                         the_post_thumbnail(
                                             'large',
                                             array(
@@ -145,101 +145,101 @@ $page_title = post_type_archive_title('', false);
                                             )
                                         );
                                         ?>
-                            <?php endif; ?>
+                                    <?php endif; ?>
 
 
-                            <!-- Date -->
-                            <?php if ($event_date) : ?>
+                                    <!-- Date -->
+                                    <?php if ($event_date) : ?>
 
-                            <div class="h4 tag">
+                                        <div class="h4 tag">
 
-                                <?php
+                                            <?php
                                             echo esc_html(
                                                 $event_month
                                             );
                                             ?>
 
-                                <span>
-                                    <?php
+                                            <span>
+                                                <?php
                                                 echo esc_html(
                                                     $event_day
                                                 );
                                                 ?>
-                                </span>
+                                            </span>
 
+                                        </div>
+
+                                    <?php endif; ?>
+
+                                </figure>
                             </div>
 
-                            <?php endif; ?>
 
-                        </figure>
-                    </div>
+                            <!-- Content -->
+                            <div class="content-box">
 
-
-                    <!-- Content -->
-                    <div class="content-box">
-
-                        <!-- Title -->
-                        <div class="h3 title">
-                            <a href="<?php the_permalink(); ?>">
-                                <?php the_title(); ?>
-                            </a>
-                        </div>
+                                <!-- Title -->
+                                <div class="h3 title">
+                                    <a href="<?php the_permalink(); ?>">
+                                        <?php the_title(); ?>
+                                    </a>
+                                </div>
 
 
-                        <!-- Excerpt -->
-                        <?php if (has_excerpt()) : ?>
+                                <!-- Excerpt -->
+                                <?php if (has_excerpt()) : ?>
 
-                        <p class="text">
-                            <?php the_excerpt(); ?>
-                        </p>
+                                    <p class="text">
+                                        <?php the_excerpt(); ?>
+                                    </p>
 
-                        <?php endif; ?>
-
-
-                        <div class="info">
-
-                            <div>
+                                <?php endif; ?>
 
 
-                                <?php if ($event_topic) : ?>
+                                <div class="info">
 
-                                <div class="h4 info-title">
+                                    <div>
 
-                                    <span>
-                                        <?php
+
+                                        <?php if ($event_topic) : ?>
+
+                                            <div class="h4 info-title">
+
+                                                <span>
+                                                    <?php
                                                     esc_html_e(
                                                         'Topic:',
                                                         'uk-mosque'
                                                     );
                                                     ?>
-                                    </span>
+                                                </span>
 
-                                    <?php
+                                                <?php
                                                 echo esc_html(
                                                     $event_topic
                                                 );
                                                 ?>
 
-                                </div>
+                                            </div>
 
-                                <?php endif; ?>
+                                        <?php endif; ?>
 
 
-                                <!-- Time -->
-                                <?php if ($event_start) : ?>
+                                        <!-- Time -->
+                                        <?php if ($event_start) : ?>
 
-                                <div class="h4 info-title">
+                                            <div class="h4 info-title">
 
-                                    <span>
-                                        <?php
+                                                <span>
+                                                    <?php
                                                     esc_html_e(
                                                         'Time:',
                                                         'uk-mosque'
                                                     );
                                                     ?>
-                                    </span>
+                                                </span>
 
-                                    <?php
+                                                <?php
                                                 echo esc_html(
                                                     date_i18n(
                                                         get_option(
@@ -253,11 +253,11 @@ $page_title = post_type_archive_title('', false);
                                                 ?>
 
 
-                                    <?php if ($event_end) : ?>
+                                                <?php if ($event_end) : ?>
 
-                                    -
+                                                    -
 
-                                    <?php
+                                                    <?php
                                                     echo esc_html(
                                                         date_i18n(
                                                             get_option(
@@ -270,56 +270,56 @@ $page_title = post_type_archive_title('', false);
                                                     );
                                                     ?>
 
-                                    <?php endif; ?>
+                                                <?php endif; ?>
 
-                                </div>
+                                            </div>
 
-                                <?php endif; ?>
+                                        <?php endif; ?>
 
-                            </div>
+                                    </div>
 
 
-                            <!-- Join Button -->
-                            <a class="theme-btn btn-style-three" href="<?php echo esc_url(get_permalink()); ?>">
+                                    <!-- Join Button -->
+                                    <a class="theme-btn btn-style-three" href="<?php echo esc_url(get_permalink()); ?>">
 
-                                <span class="btn-arrow-left">
-                                    <i class="fal fa-arrow-right"></i>
-                                </span>
+                                        <span class="btn-arrow-left">
+                                            <i class="fal fa-arrow-right"></i>
+                                        </span>
 
-                                <span class="btn-title">
-                                    <?php
+                                        <span class="btn-title">
+                                            <?php
                                             esc_html_e(
                                                 'Join Now',
                                                 'uk-mosque'
                                             );
                                             ?>
-                                </span>
+                                        </span>
 
-                                <span class="btn-arrow-right">
-                                    <i class="fal fa-arrow-right"></i>
-                                </span>
+                                        <span class="btn-arrow-right">
+                                            <i class="fal fa-arrow-right"></i>
+                                        </span>
 
-                            </a>
+                                    </a>
+
+                                </div>
+
+                            </div>
 
                         </div>
-
                     </div>
 
-                </div>
-            </div>
-
-            <?php endwhile; ?>
+                <?php endwhile; ?>
 
             <?php else : ?>
 
-            <h1>
-                <?php
+                <h1>
+                    <?php
                     esc_html_e(
                         'No events found!',
                         'uk-mosque'
                     );
                     ?>
-            </h1>
+                </h1>
 
             <?php endif; ?>
 

@@ -275,6 +275,7 @@ function uk_mosque_admin_styles($hook)
             array(
                 'event',
                 'donation',
+                'team_member'
             ),
             true
         )
@@ -485,3 +486,142 @@ function uk_mosque_save_donation_details($post_id)
 }
 
 add_action('save_post_donation', 'uk_mosque_save_donation_details');
+
+
+
+function uk_mosque_team_details_metabox()
+{
+    add_meta_box(
+        'uk_mosque_team_details',
+        __('Social Media Link', 'uk-mosque'),
+        'uk_mosque_team_details_callback',
+        'team_member',
+        'normal',
+        'high'
+    );
+}
+
+add_action('add_meta_boxes', 'uk_mosque_team_details_metabox');
+
+
+function uk_mosque_team_details_callback($post)
+{
+
+    wp_nonce_field('uk_mosque_save_team_details', 'uk_mosque_team_details_nonce');
+
+    $team_facebook = get_post_meta(
+        $post->ID,
+        '_team_facebook',
+        true
+    );
+
+    $team_instagram = get_post_meta(
+        $post->ID,
+        '_team_instagram',
+        true
+    );
+
+    $team_twitter = get_post_meta(
+        $post->ID,
+        '_team_twitter',
+        true
+    );
+
+
+?>
+
+<div class="common-metabox-flex">
+    <div class="common-metabox-field">
+        <label for="team_facebook">
+            <strong><?php esc_html_e('Facebook', 'uk-mosque') ?> </strong>
+        </label>
+
+        <input type="url" id="team_facebook" name="team_facebook" value="<?php echo esc_attr($team_facebook) ?>">
+    </div>
+
+    <div class="common-metabox-field">
+        <label for="team_instagram">
+            <strong><?php esc_html_e('instagram', 'uk-mosque') ?> </strong>
+        </label>
+
+        <input type="url" id="team_instagram" name="team_instagram" value="<?php echo esc_attr($team_instagram) ?>">
+    </div>
+</div>
+<div class="common-metabox-flex">
+    <div class="common-metabox-field">
+        <label for="team_twitter">
+            <strong><?php esc_html_e('twitter', 'uk-mosque') ?> </strong>
+        </label>
+
+        <input type="url" id="team_twitter" name="team_twitter" value="<?php echo esc_attr($team_twitter) ?>">
+    </div>
+</div>
+
+
+
+<?php
+
+}
+
+function uk_mosque_save_team_details($post_id)
+{
+    if (
+        !isset($_POST['uk_mosque_team_details_nonce'])
+
+        ||
+
+        !wp_verify_nonce(
+            wp_unslash($_POST['uk_mosque_team_details_nonce']),
+            'uk_mosque_save_team_details'
+        )
+
+    ) {
+        return;
+    }
+
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+        return;
+    }
+
+    if (
+        !current_user_can(
+            'edit_post',
+            $post_id
+        )
+    ) {
+        return;
+    }
+
+
+    if (isset($_POST['team_facebook'])) {
+        update_post_meta(
+            $post_id,
+            '_team_facebook',
+            esc_url_raw(
+                wp_unslash($_POST['team_facebook'])
+            )
+        );
+    }
+
+    if (isset($_POST['team_instagram'])) {
+        update_post_meta(
+            $post_id,
+            '_team_instagram',
+            esc_url_raw(
+                wp_unslash($_POST['team_instagram'])
+            )
+        );
+    }
+
+    if (isset($_POST['team_twitter'])) {
+        update_post_meta(
+            $post_id,
+            '_team_twitter',
+            esc_url_raw(
+                wp_unslash($_POST['team_twitter'])
+            )
+        );
+    }
+}
+
+add_action('save_post_team_member', 'uk_mosque_save_team_details');

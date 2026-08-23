@@ -100,6 +100,58 @@ function uk_mosque_register_post_types()
             'excerpt',
         ),
     ));
+
+    /**
+     * Teams CPT
+     */
+
+
+    register_post_type('team_member', array(
+
+        'labels' => array(
+            'name'                  => __('Team Members', 'uk-mosque'),
+            'singular_name'         => __('Team Member', 'uk-mosque'),
+            'menu_name'             => __('Team Members', 'uk-mosque'),
+            'name_admin_bar'        => __('Team Member', 'uk-mosque'),
+            'add_new'               => __('Add New', 'uk-mosque'),
+            'add_new_item'          => __('Add New Team Member', 'uk-mosque'),
+            'new_item'              => __('New Team Member', 'uk-mosque'),
+            'edit_item'             => __('Edit Team Member', 'uk-mosque'),
+            'view_item'             => __('View Team Member', 'uk-mosque'),
+            'all_items'             => __('All Team Members', 'uk-mosque'),
+            'search_items'          => __('Search Team Members', 'uk-mosque'),
+            'not_found'             => __('No team members found.', 'uk-mosque'),
+            'not_found_in_trash'    => __('No team members found in Trash.', 'uk-mosque'),
+            'featured_image'        => __('Team Member Photo', 'uk-mosque'),
+            'set_featured_image'    => __('Set Team Member Photo', 'uk-mosque'),
+            'remove_featured_image' => __('Remove Team Member Photo', 'uk-mosque'),
+            'use_featured_image'    => __('Use as Team Member Photo', 'uk-mosque'),
+        ),
+        'public'             => true,
+        'show_ui'            => true,
+        'show_in_menu'       => true,
+        'show_in_admin_bar'  => true,
+        'show_in_nav_menus'  => true,
+
+        'menu_icon'          => 'dashicons-groups',
+
+        'menu_position'      => 20,
+        'supports'           => array(
+            'title',
+            'editor',
+            'thumbnail',
+        ),
+
+        'has_archive'        => true,
+        'rewrite'             => array(
+            'slug'       => 'team',
+            'with_front' => false,
+        ),
+
+        'publicly_queryable' => true,
+        'query_var'          => true,
+        'show_in_rest'       => true,
+    ));
 }
 
 add_action('init', 'uk_mosque_register_post_types');
@@ -215,6 +267,173 @@ function uk_mosque_event_column_content($column, $post_id)
 add_action(
     'manage_event_posts_custom_column',
     'uk_mosque_event_column_content',
+    10,
+    2
+);
+
+/**
+ * Add custom columns to Donation CPT
+ */
+
+function uk_mosque_donation_column($columns)
+{
+    return array(
+        'cb'            => $columns['cb'],
+        'title'         => __('Donation Title', 'uk-mosque'),
+        'donation_category'    => __('Category', 'uk-mosque'),
+        'donation_goal_amount'  => __('Goal', 'uk-mosque'),
+        'donation_raised_amount' => __('Raised', 'uk-mosque'),
+        'donation_start_date'   => __('Start Date', 'uk-mosque'),
+        'donation_end_date'     => __('End Date', 'uk-mosque'),
+        'date'                  => __('Date', 'uk-mosque'),
+    );
+}
+
+add_filter(
+    'manage_donation_posts_columns',
+    'uk_mosque_donation_column'
+);
+
+/**
+ * Display Donation Column Values
+ */
+
+function uk_mosque_donation_column_content($column, $post_id)
+{
+    switch ($column) {
+
+
+        case 'donation_category':
+
+            $terms = get_the_terms(
+                $post_id,
+                'donation_category'
+            );
+
+            if (
+                !empty($terms)
+                &&
+                !is_wp_error($terms)
+            ) {
+
+                $categories = array();
+
+                foreach ($terms as $term) {
+                    $categories[] = esc_html($term->name);
+                }
+
+                echo implode(', ', $categories);
+            } else {
+
+                echo '—';
+            }
+
+            break;
+
+
+
+        case 'donation_goal_amount':
+
+            $goal_amount = get_post_meta(
+                $post_id,
+                '_donation_goal_amount',
+                true
+            );
+
+            if ($goal_amount !== '') {
+
+                echo esc_html(
+                    number_format_i18n(
+                        (float) $goal_amount,
+                        2
+                    )
+                );
+            } else {
+
+                echo '—';
+            }
+
+            break;
+
+
+
+        case 'donation_raised_amount':
+
+            $raised_amount = get_post_meta(
+                $post_id,
+                '_donation_raised_amount',
+                true
+            );
+
+            if ($raised_amount !== '') {
+
+                echo esc_html(
+                    number_format_i18n(
+                        (float) $raised_amount,
+                        2
+                    )
+                );
+            } else {
+
+                echo '—';
+            }
+
+            break;
+
+
+        case 'donation_start_date':
+
+            $start_date = get_post_meta(
+                $post_id,
+                '_donation_start_date',
+                true
+            );
+
+            if ($start_date) {
+
+                echo esc_html(
+                    date_i18n(
+                        get_option('date_format'),
+                        strtotime($start_date)
+                    )
+                );
+            } else {
+
+                echo '—';
+            }
+
+            break;
+
+
+
+        case 'donation_end_date':
+
+            $end_date = get_post_meta(
+                $post_id,
+                '_donation_end_date',
+                true
+            );
+
+            if ($end_date) {
+
+                echo esc_html(
+                    date_i18n(
+                        get_option('date_format'),
+                        strtotime($end_date)
+                    )
+                );
+            } else {
+
+                echo '—';
+            }
+
+            break;
+    }
+}
+
+add_action(
+    'manage_donation_posts_custom_column',
+    'uk_mosque_donation_column_content',
     10,
     2
 );

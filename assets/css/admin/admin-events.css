@@ -33,6 +33,7 @@
     color: #1d2327;
 }
 
+.common-metabox-field input[type="url"],
 .common-metabox-field input[type="number"],
 .common-metabox-field input[type="date"],
 .common-metabox-field input[type="time"],
@@ -49,6 +50,7 @@
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+.common-metabox-field input[type="url"]:hover,
 .common-metabox-field input[type="number"]:hover,
 .common-metabox-field input[type="date"]:hover,
 .common-metabox-field input[type="time"]:hover,
@@ -56,6 +58,7 @@
     border-color: #6c7075;
 }
 
+.common-metabox-field input[type="url"]:focus,
 .common-metabox-field input[type="number"]:focus,
 .common-metabox-field input[type="date"]:focus,
 .common-metabox-field input[type="time"]:focus,
