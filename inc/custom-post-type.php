@@ -152,6 +152,209 @@ function uk_mosque_register_post_types()
         'query_var'          => true,
         'show_in_rest'       => true,
     ));
+
+    /**
+     * Testimonial CPT
+     */
+
+    register_post_type('testimonial', array(
+        'labels' =>  array(
+            'name'                  => __('Testimonials', 'uk-mosque'),
+            'singular_name'         => __('Testimonial', 'uk-mosque'),
+            'menu_name'             => __('Testimonials', 'uk-mosque'),
+            'name_admin_bar'        => __('Testimonial', 'uk-mosque'),
+            'add_new'               => __('Add New', 'uk-mosque'),
+            'add_new_item'          => __('Add New Testimonial', 'uk-mosque'),
+            'new_item'              => __('New Testimonial', 'uk-mosque'),
+            'edit_item'             => __('Edit Testimonial', 'uk-mosque'),
+            'view_item'             => __('View Testimonial', 'uk-mosque'),
+            'all_items'             => __('All Testimonials', 'uk-mosque'),
+            'search_items'          => __('Search Testimonials', 'uk-mosque'),
+            'not_found'             => __('No testimonials found.', 'uk-mosque'),
+            'not_found_in_trash'    => __('No testimonials found in Trash.', 'uk-mosque'),
+            'featured_image'        => __('Author Photo', 'uk-mosque'),
+            'set_featured_image'    => __('Set Author Photo', 'uk-mosque'),
+            'remove_featured_image' => __('Remove Author Photo', 'uk-mosque'),
+            'use_featured_image'    => __('Use as Author Photo', 'uk-mosque'),
+        ),
+
+        'public'             => true,
+        'show_ui'            => true,
+        'show_in_menu'       => true,
+        'show_in_admin_bar'  => true,
+        'show_in_nav_menus'  => true,
+
+        'has_archive'        => true,
+        'supports' => array(
+            'title',
+            'editor',
+            'thumbnail',
+        ),
+
+        'menu_icon' => 'dashicons-format-quote',
+
+        'show_in_rest' => true,
+
+        'publicly_queryable' => true,
+        'query_var'         => true,
+    ));
+
+    /**
+     * Service CPT
+     */
+
+    register_post_type('service', array(
+        'labels' => array(
+            'name'                  => __('Services', 'uk-mosque'),
+            'singular_name'         => __('Service', 'uk-mosque'),
+            'menu_name'             => __('Services', 'uk-mosque'),
+            'name_admin_bar'        => __('Service', 'uk-mosque'),
+
+            'add_new'               => __('Add New', 'uk-mosque'),
+            'add_new_item'          => __('Add New Service', 'uk-mosque'),
+            'new_item'              => __('New Service', 'uk-mosque'),
+            'edit_item'             => __('Edit Service', 'uk-mosque'),
+            'view_item'             => __('View Service', 'uk-mosque'),
+            'all_items'             => __('All Services', 'uk-mosque'),
+            'search_items'          => __('Search Services', 'uk-mosque'),
+
+            'not_found'             => __('No services found.', 'uk-mosque'),
+            'not_found_in_trash'    => __('No services found in Trash.', 'uk-mosque'),
+
+            'featured_image'        => __('Service Image', 'uk-mosque'),
+            'set_featured_image'    => __('Set Service Image', 'uk-mosque'),
+            'remove_featured_image' => __('Remove Service Image', 'uk-mosque'),
+            'use_featured_image'    => __('Use as Service Image', 'uk-mosque'),
+        ),
+        'public'             => true,
+        'show_ui'            => true,
+        'show_in_menu'       => true,
+        'show_in_admin_bar'  => true,
+        'show_in_nav_menus'  => true,
+
+        'has_archive' => true,
+
+        'rewrite' => array(
+            'slug'       => 'services',
+            'with_front' => false,
+        ),
+
+        'supports' => array(
+            'title',
+            'excerpt',
+            'editor',
+            'thumbnail',
+        ),
+
+        'menu_icon' => 'dashicons-admin-tools',
+
+        'show_in_rest' => true,
+
+        'publicly_queryable' => true,
+        'query_var'          => true,
+    ));
+
+    /**
+     * FAQ CPT
+     */
+
+    register_post_type('faq', array(
+        'labels' => array(
+            'name'               => __('FAQs', 'uk-mosque'),
+            'singular_name'      => __('FAQ', 'uk-mosque'),
+            'menu_name'          => __('FAQs', 'uk-mosque'),
+            'name_admin_bar'     => __('FAQ', 'uk-mosque'),
+
+            'add_new'            => __('Add New', 'uk-mosque'),
+            'add_new_item'       => __('Add New FAQ', 'uk-mosque'),
+            'new_item'           => __('New FAQ', 'uk-mosque'),
+            'edit_item'          => __('Edit FAQ', 'uk-mosque'),
+            'view_item'          => __('View FAQ', 'uk-mosque'),
+            'all_items'          => __('All FAQs', 'uk-mosque'),
+            'search_items'       => __('Search FAQs', 'uk-mosque'),
+
+            'not_found'          => __('No FAQs found.', 'uk-mosque'),
+            'not_found_in_trash' => __('No FAQs found in Trash.', 'uk-mosque'),
+        ),
+        'public'             => true,
+        'show_ui'            => true,
+        'show_in_menu'       => true,
+        'show_in_admin_bar'  => true,
+        'show_in_nav_menus'  => true,
+
+        'has_archive' => true,
+
+        'rewrite' => array(
+            'slug'       => 'faqs',
+            'with_front' => false,
+        ),
+
+        'supports' => array(
+            'title',
+            'editor',
+        ),
+
+        'menu_icon' => 'dashicons-editor-help',
+
+        'show_in_rest' => true,
+
+        'publicly_queryable' => true,
+        'query_var'          => true,
+    ));
+
+
+    /**
+     * Gallery CPT
+     */
+
+    register_post_type('gallery_item', array(
+        'labels' => array(
+            'name'                  => __('Gallery', 'uk-mosque'),
+            'singular_name'         => __('Gallery Item', 'uk-mosque'),
+            'menu_name'             => __('Gallery', 'uk-mosque'),
+            'name_admin_bar'        => __('Gallery Item', 'uk-mosque'),
+
+            'add_new'               => __('Add New', 'uk-mosque'),
+            'add_new_item'          => __('Add New Gallery Item', 'uk-mosque'),
+            'new_item'              => __('New Gallery Item', 'uk-mosque'),
+            'edit_item'             => __('Edit Gallery Item', 'uk-mosque'),
+            'view_item'             => __('View Gallery Item', 'uk-mosque'),
+            'all_items'             => __('All Gallery Items', 'uk-mosque'),
+            'search_items'          => __('Search Gallery', 'uk-mosque'),
+
+            'not_found'             => __('No gallery items found.', 'uk-mosque'),
+            'not_found_in_trash'    => __('No gallery items found in Trash.', 'uk-mosque'),
+
+            'featured_image'        => __('Gallery Photo', 'uk-mosque'),
+            'set_featured_image'    => __('Set Gallery Photo', 'uk-mosque'),
+            'remove_featured_image' => __('Remove Gallery Photo', 'uk-mosque'),
+            'use_featured_image'    => __('Use as Gallery Photo', 'uk-mosque'),
+        ),
+        'public'             => true,
+        'show_ui'            => true,
+        'show_in_menu'       => true,
+        'show_in_admin_bar'  => true,
+        'show_in_nav_menus'  => true,
+
+        'has_archive' => true,
+
+        'rewrite' => array(
+            'slug'       => 'gallery',
+            'with_front' => false,
+        ),
+
+        'supports' => array(
+            'title',
+            'thumbnail',
+        ),
+
+        'menu_icon' => 'dashicons-format-gallery',
+
+        'show_in_rest' => true,
+
+        'publicly_queryable' => true,
+        'query_var'          => true,
+    ));
 }
 
 add_action('init', 'uk_mosque_register_post_types');

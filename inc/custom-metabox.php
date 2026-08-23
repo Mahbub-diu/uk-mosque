@@ -275,7 +275,8 @@ function uk_mosque_admin_styles($hook)
             array(
                 'event',
                 'donation',
-                'team_member'
+                'team_member',
+                'testimonial'
             ),
             true
         )
@@ -625,3 +626,167 @@ function uk_mosque_save_team_details($post_id)
 }
 
 add_action('save_post_team_member', 'uk_mosque_save_team_details');
+
+/**
+ * Testimonial Details Meta Box
+ */
+function uk_mosque_testimonial_details_metabox()
+{
+    add_meta_box(
+        'uk_mosque_testimonial_details',
+        __('Testimonial Details', 'uk-mosque'),
+        'uk_mosque_testimonial_details_callback',
+        'testimonial',
+        'side',
+        'high'
+    );
+}
+
+add_action(
+    'add_meta_boxes',
+    'uk_mosque_testimonial_details_metabox'
+);
+
+
+function uk_mosque_testimonial_details_callback($post)
+{
+
+    wp_nonce_field(
+        'uk_mosque_testimonial_details_save',
+        'uk_mosque_testimonial_details_nonce'
+    );
+
+    $role = get_post_meta(
+        $post->ID,
+        '_uk_mosque_testimonial_role',
+        true
+    );
+
+    $rating = get_post_meta(
+        $post->ID,
+        '_uk_mosque_testimonial_rating',
+        true
+    );
+
+
+?>
+
+<div class="common-metabox-field">
+    <label for="uk_mosque_testimonial_role">
+        <strong><?php esc_html_e('Designation / Role', 'uk-mosque'); ?></strong>
+    </label>
+
+    <input type="text" id="uk_mosque_testimonial_role" name="uk_mosque_testimonial_role"
+        value="<?php echo esc_attr($role); ?>" placeholder="<?php esc_attr_e('e.g. Community Member', 'uk-mosque'); ?>">
+</div>
+
+<div class="common-metabox-field">
+    <label for="uk_mosque_testimonial_rating">
+        <strong> <?php esc_html_e('Rating', 'uk-mosque'); ?></strong>
+    </label>
+
+    <input type="number" id="uk_mosque_testimonial_rating" name="uk_mosque_testimonial_rating"
+        value="<?php echo esc_attr($rating); ?>" min="1" max="5" step="1"
+        placeholder="<?php esc_attr_e('1 - 5', 'uk-mosque'); ?>">
+</div>
+
+<?php
+}
+
+function uk_mosque_save_testimonial_details($post_id)
+{
+    if (
+        !isset(
+            $_POST['uk_mosque_testimonial_details_nonce']
+        )
+    ) {
+        return;
+    }
+
+    if (
+        !wp_verify_nonce(
+            wp_unslash(
+                $_POST['uk_mosque_testimonial_details_nonce']
+            ),
+            'uk_mosque_testimonial_details_save'
+        )
+    ) {
+        return;
+    }
+
+    if (
+        defined('DOING_AUTOSAVE')
+        && DOING_AUTOSAVE
+    ) {
+        return;
+    }
+
+    if (
+        get_post_type($post_id) !== 'testimonial'
+    ) {
+        return;
+    }
+
+    if (
+        !current_user_can(
+            'edit_post',
+            $post_id
+        )
+    ) {
+        return;
+    }
+
+    /**
+     * Save Role
+     */
+    if (
+        isset(
+            $_POST['uk_mosque_testimonial_role']
+        )
+    ) {
+        $role = sanitize_text_field(
+            wp_unslash(
+                $_POST['uk_mosque_testimonial_role']
+            )
+        );
+
+        update_post_meta(
+            $post_id,
+            '_uk_mosque_testimonial_role',
+            $role
+        );
+    }
+
+    /**
+     * Save Rating
+     */
+    if (
+        isset(
+            $_POST['uk_mosque_testimonial_rating']
+        )
+    ) {
+        $rating = absint(
+            wp_unslash(
+                $_POST['uk_mosque_testimonial_rating']
+            )
+        );
+
+        if ($rating >= 1 && $rating <= 5) {
+            update_post_meta(
+                $post_id,
+                '_uk_mosque_testimonial_rating',
+                $rating
+            );
+        } else {
+            delete_post_meta(
+                $post_id,
+                '_uk_mosque_testimonial_rating'
+            );
+        }
+    }
+}
+
+add_action(
+    'save_post_testimonial',
+    'uk_mosque_save_testimonial_details'
+);
