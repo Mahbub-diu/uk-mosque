@@ -34,7 +34,7 @@
 
         <!-- Back-to-top start -->
         <button id="back-top" class="back-to-top">
-            <i class="fa-regular fa-arrow-up"></i>
+            <i class="fal fa-arrow-up"></i>
         </button>
         <!-- Back-to-top start -->
 
@@ -79,13 +79,13 @@
 
                             <div class="action-box">
                                 <div class="contact-widget">
-                                    <a href="page-contact.html">
+                                    <a href="<?php echo esc_url(uk_mosque_contact_page_url()); ?>">
                                         <i class="icon fa-classic fa-solid fa-location-dot"></i>
                                         <span>
                                             <?php echo esc_html(get_theme_mod('mosque_address')); ?>
                                         </span>
                                     </a>
-                                    <a href="tel:<?php echo esc_attr(get_theme_mod('mosque_phone')); ?>">
+                                    <a href="<?php echo esc_url(uk_mosque_tel_href(get_theme_mod('mosque_phone'))); ?>">
                                         <i class="icon fa-classic fa-solid fa-phone-volume"></i>
                                         <span>
                                             <?php echo esc_html(get_theme_mod('mosque_phone')); ?>
@@ -128,44 +128,26 @@
                             <i class="icon lnr-icon-envelope1"></i>
                             <span class="title">Send Email</span>
                             <div class="text">
-                                <a href="#">
-                                    <span class="__cf_email__" data-cfemail="">
-                                        <?php echo esc_html(get_theme_mod('mosque_email'));  ?>
-                                    </span>
+                                <a href="mailto:<?php echo esc_attr(get_theme_mod('mosque_email')); ?>">
+                                    <?php echo esc_html(get_theme_mod('mosque_email')); ?>
                                 </a>
                             </div>
                         </li>
                     </ul>
-                    <ul class="social-links">
-                        <li>
-                            <a href="<?php echo esc_attr(get_theme_mod('mosque_twitter')); ?>">
-                                <i class="icon fab fa-twitter">
+                    <?php $social_links = uk_mosque_social_links(); ?>
 
-                                </i>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="<?php echo esc_attr(get_theme_mod('mosque_facebook')); ?>">
-                                <i class="icon fab fa-facebook-f">
-
-                                </i>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="<?php echo esc_attr(get_theme_mod('mosque_instagram')); ?>">
-                                <i class="icon fab fa-instagram">
-
-                                </i>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="<?php echo esc_attr(get_theme_mod('mosque_youtube')); ?>">
-                                <i class="icon  fab fa-youtube">
-
-                                </i>
-                            </a>
-                        </li>
-                    </ul>
+                    <?php if ($social_links) : ?>
+                        <ul class="social-links">
+                            <?php foreach ($social_links as $link) : ?>
+                                <li>
+                                    <a href="<?php echo esc_url($link['url']); ?>" target="_blank" rel="noopener noreferrer">
+                                        <i class="<?php echo esc_attr($link['icon']); ?>"></i>
+                                        <span class="screen-reader-text"><?php echo esc_html($link['label']); ?></span>
+                                    </a>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    <?php endif; ?>
                 </nav>
             </div>
             <!-- End Mobile Menu -->

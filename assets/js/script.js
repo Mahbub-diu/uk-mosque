@@ -70,29 +70,24 @@ var ukmosque = {};
     return $(window).scrollTop();
   }
 
+  // Distance scrolled before the back-to-top button fades in.
+  var backToTopOffset = 300;
+
   function handleBackToTop() {
-    var scrollTop = getScrollTop();
-    if (scrollTop + $(window).height() >= $(document).height() - 10) {
-      $('#back-top').addClass('show');
-    } else {
-      $('#back-top').removeClass('show');
-    }
+    $('#back-top').toggleClass('show', getScrollTop() > backToTopOffset);
   }
 
   //Update Header Style and Scroll to Top
   function headerStyle() {
     if ($('.main-header').length) {
       var windowpos = getScrollTop();
-      var scrollLink = $('.scroll-to-top');
       var sticky_header = $('.main-header .sticky-header');
       if (windowpos > 120 && !stickyHeaderActive) {
         stickyHeaderActive = true;
         sticky_header.addClass('fixed-header animated slideInDown');
-        scrollLink.fadeIn(300);
       } else if (windowpos <= 80 && stickyHeaderActive) {
         stickyHeaderActive = false;
         sticky_header.removeClass('fixed-header animated slideInDown');
-        scrollLink.fadeOut(300);
       }
     }
   }
@@ -476,7 +471,7 @@ var ukmosque = {};
   if ($('.donation-form').length) {
     let defaultAmount = $('.amount-btn.active').data('amount');
     if (defaultAmount) {
-      $('#donationAmount').val('$' + defaultAmount);
+      $('#donationAmount').val('£' + defaultAmount);
     }
 
     $('.amount-btn').on('click', function () {
@@ -489,7 +484,7 @@ var ukmosque = {};
         let amount = $(this).data('amount');
         $('#donationAmount')
           .prop('readonly', true)
-          .val('$' + amount);
+          .val('£' + amount);
       }
     });
   }
@@ -911,8 +906,16 @@ var ukmosque = {};
     TM_activateMenuItemOnReach();
   }
 
+  // ScrollTrigger has no 'scroll' event, so a listener for it never fires.
+  // A full-range trigger reports every scroll tick, and its position follows
+  // ScrollSmoother's eased value while the smoother is running.
   if (typeof ScrollTrigger !== 'undefined') {
-    ScrollTrigger.addEventListener('scroll', onPageScroll);
+    ScrollTrigger.create({
+      start: 0,
+      end: 'max',
+      onUpdate: onPageScroll,
+      onRefresh: onPageScroll,
+    });
   } else {
     $(window).on('scroll', onPageScroll);
   }

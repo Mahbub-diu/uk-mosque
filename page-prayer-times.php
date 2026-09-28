@@ -13,22 +13,9 @@ if (!defined('ABSPATH')) {
 get_header();
 ?>
 
-<!-- Start main-content -->
-<section class="page-title">
-    <div class="ripple-image ripples z-0">
-        <img src="<?php echo get_template_directory_uri(); ?>/assets/images/bg/page-title.jpg" alt="">
-    </div>
-    <div class="auto-container">
-        <div class="title-outer text-center">
-            <div class="h1 title">About</div>
-            <ul class="page-breadcrumb">
-                <li><a href="#">Home</a></li>
-                <li>About</li>
-            </ul>
-        </div>
-    </div>
-</section>
-<!-- end main-content -->
+<?php
+uk_mosque_page_banner(get_the_title());
+?>
 
 <!-- Time Section -->
 <section class="time-section">

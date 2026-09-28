@@ -13,22 +13,14 @@ if (!defined('ABSPATH')) {
 get_header();
 ?>
 
-<!-- Start main-content -->
-<section class="page-title">
-    <div class="ripple-image ripples z-0">
-        <img src="images/bg/page-title.jpg" alt="">
-    </div>
-    <div class="auto-container">
-        <div class="title-outer text-center">
-            <div class="h1 title">Blog</div>
-            <ul class="page-breadcrumb">
-                <li><a href="<?php echo eschtml(home_url('/')); ?>">Home</a></li>
-                <li>Blog</li>
-            </ul>
-        </div>
-    </div>
-</section>
-<!-- end main-content -->
+<?php
+// get_the_title(0) falls back to the global post, which on the blog index is the
+// first post in the loop — so only use the posts page when one is actually set.
+$posts_page_id = (int) get_option('page_for_posts');
+$blog_title    = $posts_page_id ? get_the_title($posts_page_id) : __('Blog', 'uk-mosque');
+
+uk_mosque_page_banner($blog_title);
+?>
 
 <!-- Blog Section Start -->
 <section class="blog-section pt-120 pb-70">

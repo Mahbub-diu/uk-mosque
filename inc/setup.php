@@ -28,6 +28,7 @@ function uk_mosque_theme_setup()
     register_nav_menus(
         array(
             'primary_menu' => __('Primary Menu', 'uk-mosque'),
+            'footer_menu'  => __('Footer Menu', 'uk-mosque'),
         )
     );
 }

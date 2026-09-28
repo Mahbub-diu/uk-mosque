@@ -1,573 +1,721 @@
-# UK Mosque Theme — Development Guide
+# UK Mosque Theme — Remaining Development Guide
 
-Custom WordPress theme, **no ACF, no page builder**. Every editable piece of content is
-managed through native WordPress APIs only:
+**Status as of 2026-09-24.** This document replaces the original spec (archived as
+[development.old.md](development.old.md), still useful for its original field tables).
+It covers only what is **left to build**, in the order to build it.
 
-- **Custom Post Types (CPT)** for repeatable content (Events, Causes/Donations, Team, Testimonials, Services, FAQs, Gallery items).
-- **Custom Meta Boxes** (`add_meta_box()` + `save_post`, hand-rolled, no ACF) for per-post fields on those CPTs.
-- **Settings API** (`register_setting()` / `add_settings_section()` / `add_settings_field()`) for page-wide content that isn't a repeatable post (hero text, prayer times, contact info, social links, etc.), each exposed as its own admin menu screen.
-- **Nav Menus** (`register_nav_menus()` + `wp_nav_menu()`) for the header/mobile/footer menus, which today are hardcoded `<ul>` markup.
-
-This document is organized **page-wise**: for every front-end template it lists the admin
-screen that edits it, the exact fields required, and the current bugs found in that
-template. It also has cross-cutting sections for CPTs, taxonomies, and file structure.
-
-> Audit note: every template file was inspected. **None of them currently read any dynamic
-> data** — no `get_post_meta()`, `WP_Query`, `get_theme_mod()`, or `get_option()` calls exist
-> anywhere in the theme, and `inc/custom-post-type.php`, `inc/custom-metabox.php`,
-> `inc/custom-texanomy.php`, `inc/theme-options.php` are all empty (0 bytes). Everything
-> below is a from-scratch build.
+The original [guideline.md](guideline.md) checklist is now partly out of date — where the
+two disagree, this file wins, because it was written against the actual code.
 
 ---
 
-## 1. Architecture summary
+## Part A — Progress audit
 
-### 1.1 Admin menu map (what the mosque admin sees in wp-admin)
+### A.1 What is done
 
-```
-Events (CPT)                         → wp-admin native CPT list/edit screens
-Causes (CPT, labelled "Donations")   → wp-admin native CPT list/edit screens
-  └ Cause Category (taxonomy)
-Team Members (CPT)                   → wp-admin native CPT list/edit screens
-Testimonials (CPT)                   → wp-admin native CPT list/edit screens
-Services (CPT)                       → wp-admin native CPT list/edit screens
-FAQs (CPT)                           → wp-admin native CPT list/edit screens
-Gallery Images (CPT)                 → wp-admin native CPT list/edit screens
-Posts (built-in)                     → used as-is for the Blog/News section
+| Area | File | State |
+| --- | --- | --- |
+| Theme setup | `inc/setup.php` | title-tag, post-thumbnails, custom-logo, html5, `primary_menu` location |
+| Asset loading | `inc/enqueue.php` | Bootstrap, style.css, jQuery, GSAP stack, Swiper, Fancybox, AOS, WOW, custom scripts |
+| CPTs (all 7) | `inc/custom-post-type.php` | `event`, `donation`, `team_member`, `testimonial`, `service`, `faq`, `gallery_item` — all public, all with archives |
+| Admin columns | `inc/custom-post-type.php` | Event + Donation list-table columns |
+| Taxonomies | `inc/custom-taxonomy.php` | `donation_category`, `team_role` |
+| Metaboxes (4) | `inc/custom-metabox.php` | Event, Donation, Team, Testimonial — with nonces and sanitised save handlers |
+| Global options | `inc/customizer.php` | Contact info (address/phone/email) + 4 social URLs |
+| Header | `header.php` | Custom logo, real nav menu, customizer contact + social. JS clones the menu into mobile + sticky nav |
+| Footer | `footer.php` | Logo, social, address, phone, email all wired |
+| Event front-end | `archive-event.php`, `single-event.php` | Real loops, real meta |
+| Donation archive | `archive-donation.php` | Real loop, meta, category term, progress % calculation |
 
-Theme Options (top-level menu, dashicons-admin-customizer)
- ├─ Global Settings        → logo, contact info, social links, footer text
- ├─ Home Page              → every section of front-page.php
- ├─ About Page             → page-about.php content
- ├─ Prayer Times           → the 6 daily prayer rows (shared by 3 templates)
- ├─ Contact Page           → contact.php right-column + map
- └─ 404 Page               → error page copy
-```
+### A.2 Meta key reference (as actually implemented)
 
-Each "Theme Options" submenu = one Settings API page = one editable front-end template
-section. This satisfies "admin can edit page-wise."
+The keys in the code differ from the old spec. **These are the live keys — use them.**
 
-### 1.2 File plan
+| CPT | Meta key | Type |
+| --- | --- | --- |
+| `event` | `_event_date` | date |
+| `event` | `_event_start` | time |
+| `event` | `_event_end` | time |
+| `event` | `_event_location` | text |
+| `event` | `_event_topic` | text |
+| `donation` | `_donation_goal_amount` | number |
+| `donation` | `_donation_raised_amount` | number |
+| `donation` | `_donation_start_date` | date |
+| `donation` | `_donation_end_date` | date |
+| `team_member` | `_team_facebook` / `_team_twitter` / `_team_instagram` | url |
+| `testimonial` | `_uk_mosque_testimonial_role` | text |
+| `testimonial` | `_uk_mosque_testimonial_rating` | number 1–5 |
 
-```
-inc/
-  setup.php              (existing – add register_nav_menus() here)
-  enqueue.php            (existing – no changes needed)
-  custom-post-type.php   (existing, empty – register all 7 CPTs here)
-  custom-texanomy.php    (existing, empty – register cause_category taxonomy here)
-  custom-metabox.php     (existing, empty – all add_meta_box() + save handlers)
-  theme-options.php      (existing, empty, NOT required in functions.php yet
-                           – must add `require_once` line + build Settings API pages)
-  helpers.php            (new – small getter functions, see 1.3)
+Notes:
 
-template-parts/
-  donation/
-    donation-card.php     (existing, empty – single cause card markup)
-    donation-meta.php     (existing, empty – raised/goal amounts block)
-    donation-progress.php (existing, empty – progress bar, % from meta)
-  event/
-    event-card.php        (new – single event card markup, used on home + archive)
-  prayer-times.php         (new – shared prayer-times table, used on 3 templates)
-  faq.php                  (new – shared FAQ accordion, used on 2 templates)
-  services.php             (new – shared services grid, used on 2 templates)
-```
+- Team **role** is a taxonomy (`team_role`), not a meta field — the old spec said meta.
+- `_donation_hover_image` from the old spec was never built. Decide in Step 6 whether you want it.
+- Testimonial keys use the `_uk_mosque_` prefix; everything else does not. **Leave them alone** —
+  renaming now orphans existing post meta. Just be aware of the inconsistency.
 
-### 1.3 Naming conventions
+### A.3 What is NOT done
 
-- Function prefix: `uk_mosque_`
-- CPT keys: `event`, `cause`, `team_member`, `testimonial`, `service`, `faq`, `gallery_item`
-  (using `cause` instead of `donation` avoids the WooCommerce-style ambiguity, but keep
-  `donation` as the taxonomy/query-var if you prefer — pick one and use consistently;
-  templates already named `archive-donation.php`/`single-donation.php`/
-  `taxonomy-donation_category.php` imply the CPT slug should actually be `donation` to
-  match WordPress's automatic template routing — **use `donation`, not `cause`**, see §3).
-- Taxonomy key: `donation_category`
-- Option keys (Settings API): `uk_mosque_{screen}_options`, e.g. `uk_mosque_home_options`,
-  `uk_mosque_global_options`, `uk_mosque_prayer_times_options`.
-- Meta keys: `_uk_mosque_{field}` (underscore prefix hides them from the default Custom
-  Fields metabox).
-- Add small getter wrappers in `inc/helpers.php`, e.g. `uk_mosque_get_option('global', 'phone')`,
-  so templates never call `get_option()` raw. Keeps templates readable and gives one place
-  to add default fallbacks.
+| # | Gap | Severity |
+| --- | --- | --- |
+| 1 | `index.php` is a stub — and 5 CPT archives + 5 CPT singles fall through to it | Blocker |
+| 2 | `single.php` is a stub | Blocker |
+| 3 | `taxonomy-donation_category.php` is a **0-byte file** → blank white page | Blocker |
+| 4 | `front-page.php` — 1498 lines, 100% static, 0 queries | Core |
+| 5 | `single-donation.php` — 209 lines, 100% static | Core |
+| 6 | `home.php` — static blog grid, no Loop | Core |
+| 7 | Prayer times have no storage anywhere | Core |
+| 8 | Contact form posts to an external vendor URL | Core |
+| 9 | `page-about.php`, `page-prayer-times.php`, `contact.php` — static | Important |
+| 10 | Newsletter form in footer is inert | Important |
+| 11 | `template-parts/donation/*.php` — 3 empty files | Important |
+| 12 | `inc/theme-options.php` — empty and never required | Important |
+| 13 | No `inc/helpers.php`, `searchform.php`, `sidebar.php`, `comments.php` | Important |
+| 14 | No pagination anywhere (`posts_per_page => -1` everywhere) | Important |
+| 15 | Assorted broken links / typos (see Step 14) | Polish |
 
 ---
 
-## 2. Global site-wide settings (used on nearly every template)
+## Part B — Decisions to make before you write more code
 
-**Admin screen:** Theme Options → Global Settings
-**Option name:** `uk_mosque_global_options` (array)
+### B.1 Customizer vs. Settings API — pick the Customizer
 
-Currently duplicated, hardcoded, and inconsistent across `header.php`, `footer.php`,
-`contact.php`, and `front-page.php`. Consolidate into one source of truth.
+The old spec called for a Settings API screen in `inc/theme-options.php`. You instead built
+`inc/customizer.php`, and it works. Running both means two places to look for one value.
 
-| Field                                                      | Type                                                               | Used in                                                                                                                                                                        |
-| ---------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `logo` (header, light bg)                                  | image upload                                                       | header.php sticky/main logo                                                                                                                                                    |
-| `logo_alt` (footer/dark bg)                                | image upload                                                       | footer.php, mobile menu logo (currently `logo-2.png`)                                                                                                                          |
-| `phone_primary`                                            | text                                                               | header action-box, footer, contact.php                                                                                                                                         |
-| `phone_secondary`                                          | text                                                               | contact.php (currently shows 2 numbers)                                                                                                                                        |
-| `email`                                                    | email                                                              | footer, contact.php (replaces broken Cloudflare-obfuscated email links)                                                                                                        |
-| `address`                                                  | textarea                                                           | header action-box, footer, contact.php                                                                                                                                         |
-| `map_embed_url`                                            | url/textarea (iframe src)                                          | contact.php map iframe, home contact section                                                                                                                                   |
-| `facebook_url` / `x_url` / `pinterest_url` / `youtube_url` | url                                                                | footer + mobile-menu social lists (today: header uses Twitter/Facebook/Pinterest/**Vimeo**, footer uses Facebook/X/Pinterest/**YouTube** — reconcile to one set of 4 networks) |
-| `footer_newsletter_heading` / `footer_newsletter_text`     | text/textarea                                                      | footer.php newsletter box                                                                                                                                                      |
-| `footer_quick_links`                                       | repeatable (label+url) OR switch to a registered `footer` nav menu | footer.php "Quick Links" column                                                                                                                                                |
-| `copyright_text`                                           | text, supports `{year}` and `{site}` tokens                        | footer.php bottom bar (also fix hardcoded `© 2026`)                                                                                                                            |
+**Recommendation: keep the Customizer, delete the empty `inc/theme-options.php`.** It gives
+live preview for free, it is already wired, and every value this theme needs is a simple
+scalar. Everything below assumes this.
 
-**Nav menus** (not part of Settings API — use core Appearance → Menus):
-Register locations in `inc/setup.php`:
+If you would rather have the Settings API (better for 40+ fields on tabbed screens), do it now
+and migrate the 7 existing `get_theme_mod()` calls — not after you have added 40 more.
+
+### B.2 Read every option through one helper
+
+Direct `get_theme_mod()` calls are already scattered across `header.php` and `footer.php`.
+Add a wrapper in Step 1 so defaults live in one place and you can swap the storage layer later
+without touching templates.
+
+### B.3 Donation payments are out of scope for v1
+
+`single-donation.php` will get a working display and a donate **button**. Actually taking
+money needs a gateway decision (Stripe / GoCardless / a plugin like GiveWP). Flag this to the
+client; do not build a half-gateway.
+
+---
+
+## Part C — Step-by-step build order
+
+Work top to bottom. Each step is independently shippable.
+
+---
+
+### Step 1 — Foundation cleanup (Blocker)
+
+**Goal:** no route on the site returns a stub or a blank page.
+
+#### 1a. Create `inc/helpers.php`
 
 ```php
-register_nav_menus([
-  'primary' => 'Primary Menu',   // header.php desktop nav
-  'mobile'  => 'Mobile Menu',    // header.php mobile nav
-  'footer'  => 'Footer Quick Links',
-]);
-```
-
-Replace the hardcoded `<ul class="navigation">` blocks in header.php and the Quick Links
-list in footer.php with `wp_nav_menu()` calls.
-
----
-
-## 3. Custom Post Types & Taxonomies
-
-| CPT slug       | Labels             | Archive template                                            | Single template     | has_archive           | Taxonomy                    |
-| -------------- | ------------------ | ----------------------------------------------------------- | ------------------- | --------------------- | --------------------------- |
-| `event`        | Events             | archive-event.php                                           | single-event.php    | `true`, slug `events` | `event_category` (optional) |
-| `donation`     | Causes / Donations | archive-donation.php                                        | single-donation.php | `true`, slug `causes` | `donation_category`         |
-| `team_member`  | Team Members       | — (no archive template exists; query manually where needed) | optional            | `false`               | —                           |
-| `testimonial`  | Testimonials       | —                                                           | —                   | `false`               | —                           |
-| `service`      | Services           | —                                                           | —                   | `false`               | —                           |
-| `faq`          | FAQs               | —                                                           | —                   | `false`               | —                           |
-| `gallery_item` | Gallery Images     | — (gallery.php builds its own grid via WP_Query)            | —                   | `false`               | optional `gallery_category` |
-
-Register all in `inc/custom-post-type.php`, all with `'public' => true, 'show_in_menu' =>
-true, 'menu_icon' => 'dashicons-...', 'supports' => [...]`. Important: `archive-event.php`
-and `archive-donation.php` currently have a `Template Name:` header, which makes WordPress
-treat them as **Page Templates**, not automatic CPT archive templates. Decide one approach
-(see §9, Phase 1) — recommended: **remove the `Template Name` header** and let WordPress
-auto-route `/events/` and `/causes/` to these files via `has_archive`, since that's simpler
-and matches the file naming convention (`archive-{posttype}.php`) WordPress expects.
-
-### 3.1 `event` — meta fields
-
-| Meta key                      | Field                    | Notes                                                     |
-| ----------------------------- | ------------------------ | --------------------------------------------------------- |
-| `_uk_mosque_event_date`       | date picker              | drives the "Nov 25" month/day badge on cards              |
-| `_uk_mosque_event_time_start` | time                     | e.g. "09:00 PM"                                           |
-| `_uk_mosque_event_time_end`   | time                     | e.g. "10:00 PM"                                           |
-| `_uk_mosque_event_location`   | text                     | venue name/address                                        |
-| `_uk_mosque_event_topic`      | text                     | short subtitle shown on cards (e.g. "Iftar Mahfil")       |
-| `_uk_mosque_event_website`    | url                      | optional external link, shown in single-event details box |
-| Featured image                | built-in                 | card + single hero image                                  |
-| Content                       | built-in `the_content()` | replaces the hardcoded "About The Event" paragraph        |
-
-Meta box: "Event Details" with the 5 custom fields above.
-
-### 3.2 `donation` — meta fields
-
-| Meta key                          | Field    | Notes                                                                                                                                     |
-| --------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `_uk_mosque_donation_goal`        | number   | "Goal: $6,599"                                                                                                                            |
-| `_uk_mosque_donation_raised`      | number   | "Raised: $4,599" — progress % = `raised / goal * 100`, compute in `template-parts/donation/donation-progress.php`, don't store separately |
-| `_uk_mosque_donation_hover_image` | image    | second image shown on card hover (archive-donation.php currently reuses the same image twice)                                             |
-| `donation_category` (taxonomy)    | terms    | replaces the hardcoded "Food"/"Mosque" tags                                                                                               |
-| Featured image                    | built-in | primary card image                                                                                                                        |
-| Content                           | built-in | replaces "Donation Causes Overview" paragraphs                                                                                            |
-| Excerpt                           | built-in | replaces card excerpt text                                                                                                                |
-
-Meta box: "Donation Details" (goal, raised, hover image).
-
-Note: `raised` being a manually-typed number is the pragmatic MVP. If real online
-donations are added later, this becomes a computed total from a transactions table/gateway
-— flag that as a future phase, don't build it now.
-
-### 3.3 `team_member` — meta fields
-
-| Meta key                    | Field                              |
-| --------------------------- | ---------------------------------- |
-| `_uk_mosque_team_role`      | text (e.g. "Imam", "Head Teacher") |
-| `_uk_mosque_team_facebook`  | url                                |
-| `_uk_mosque_team_twitter`   | url                                |
-| `_uk_mosque_team_pinterest` | url                                |
-| Featured image              | built-in — photo                   |
-| Title                       | built-in — name                    |
-
-Meta box: "Team Member Details".
-
-### 3.4 `testimonial` — meta fields
-
-| Meta key                        | Field                                      |
-| ------------------------------- | ------------------------------------------ |
-| `_uk_mosque_testimonial_role`   | text — designation shown under author name |
-| `_uk_mosque_testimonial_rating` | number 1–5                                 |
-| Featured image                  | built-in — author photo                    |
-| Content                         | built-in — the quote                       |
-
-Meta box: "Testimonial Details" (role, rating).
-
-### 3.5 `service` — fields
-
-No custom meta needed:
-
-- Title, Excerpt (short 2-line description), Featured image, Content (optional detail
-  page — currently links to a non-existent "page-service-details.html").
-
-### 3.6 `faq` — fields
-
-No custom meta needed:
-
-- Title = question, Content = answer. `supports => ['title', 'editor']` only, disable
-  featured image/excerpt UI to keep the edit screen minimal.
-
-### 3.7 `gallery_item` — fields
-
-No custom meta needed:
-
-- Title (optional caption), Featured image = the gallery photo. Optional
-  `gallery_category` taxonomy if the admin wants filterable galleries later — skip for v1
-  unless requested.
-
----
-
-## 4. Page-by-page breakdown
-
-For each template: **Admin edit location**, **Fields**, **Bugs to fix while building**.
-
-### 4.1 Home — `front-page.php`
-
-**Admin edit location:** Theme Options → Home Page (Settings API) for section text/hero;
-Events/Donations/Team/Testimonials pull live from their CPTs; Prayer Times pulls from the
-shared Theme Options → Prayer Times screen.
-
-**Settings API fields (`uk_mosque_home_options`):**
-
-| Section            | Fields                                                                                                                      |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------------- |
-| Hero/Banner        | sub_title, heading, button_1_label, button_1_url, button_2_label, button_2_url, hero_image                                  |
-| About/Welcome      | sub_title, heading, body_text, image_1, image_2, mission_title, mission_text, vision_title, vision_text, cta_label, cta_url |
-| Causes intro       | sub*title, heading, description *(cards themselves = 3 latest/featured `donation` posts via `WP_Query`, not stored here)\_  |
-| Prayer Times intro | sub*title, heading, description *(rows come from Prayer Times screen, §4.3)\_                                               |
-| Services intro     | sub*title, heading, description *(cards = `service` CPT loop, limit 4)\_                                                    |
-| Events intro       | sub*title, heading, description *(cards = latest 3 `event` posts)\_                                                         |
-| Marquee ticker     | repeatable list of short strings (currently: "New to Islam", "Donate Now", "Arabic School", "Ask the Imam")                 |
-| Team intro         | sub*title, heading *(cards = `team_member` CPT loop)\_                                                                      |
-| Donation form      | sub_title, heading, description, image, preset_amounts (repeatable number list, currently 50/60/70/80/90/100)               |
-| FAQ intro          | heading _(items = `faq` CPT loop, limit 5)_                                                                                 |
-| Testimonial intro  | heading _(slides = `testimonial` CPT loop)_                                                                                 |
-| Blog intro         | sub*title, heading *(cards = latest 4 standard Posts via real `WP_Query`)\_                                                 |
-| Contact section    | sub*title, heading, map_image *(phone/email/address pulled from Global Settings, not duplicated here)\_                     |
-
-**Bugs found:**
-
-- Donation form (`#donationForm`) and blog "cards" have no live data — needs real loops.
-- Contact form here (and in contact.php) has **no `action`/`method`** — build a handler (see §6).
-- Causes/Events/Team/Testimonial/Blog sections are each 1 hardcoded block copy-pasted 3–6×
-  — must become real loops once the CPTs exist.
-
-### 4.2 About — `page-about.php` (Template Name: "About Page")
-
-**Admin edit location:** Theme Options → About Page.
-
-**Fields (`uk_mosque_about_options`):**
-sub_title, heading, image_1, image_2, mission_icon, mission_heading, mission_text,
-vision_icon, vision_heading, vision_text, counter_number (e.g. 98), counter_suffix (e.g.
-"%"), counter_caption, cta_label, cta_url.
-
-Prayer Times, Services, FAQ sections on this page reuse the **same shared partials**
-(`template-parts/prayer-times.php`, `services.php`, `faq.php`) as the homepage — do not
-duplicate the markup/content again, that's the bug currently in the static HTML (identical
-content copy-pasted into 3 files).
-
-**Bugs found:**
-
-- Breadcrumb "Home" link is `href="#"` — fix to `home_url()`.
-
-### 4.3 Prayer Times — `page-prayer-times.php` (Template Name: "Prayer Times Page")
-
-**Admin edit location:** Theme Options → Prayer Times.
-This is the single source of truth also rendered on Home and About via
-`template-parts/prayer-times.php`.
-
-**Fields (`uk_mosque_prayer_times_options`):**
-
-| Field                            | Notes                         |
-| -------------------------------- | ----------------------------- |
-| sub_title, heading, description  | section intro text            |
-| Fajr: adhan_time, iqamah_time    |                               |
-| Zuhr: adhan_time, iqamah_time    |                               |
-| Asr: adhan_time, iqamah_time     |                               |
-| Maghrib: adhan_time, iqamah_time |                               |
-| Isha: adhan_time, iqamah_time    |                               |
-| Jummah: adhan_time, iqamah_time  | single wide row in the design |
-
-12 time fields total + 3 text fields. Render with a small loop over an array of
-`['key' => 'fajr', 'label' => 'Fajr', 'icon' => '...svg']` etc. inside
-`template-parts/prayer-times.php` so it's one code path for all 3 templates.
-
-**Bugs found:**
-
-- Page banner heading and breadcrumb both say **"About"** (copy-paste leftover) instead of
-  "Prayer Times" — fix when rebuilding.
-- Breadcrumb "Home" link is `href="#"`, not `home_url()`.
-
-### 4.4 Contact — `contact.php` (Template Name: "Contact")
-
-**Admin edit location:** Theme Options → Contact Page (page-specific copy) + Theme Options
-→ Global Settings (phone/email/address/map — shared, don't duplicate).
-
-**Fields (`uk_mosque_contact_options`):**
-intro_heading, intro_text, form_recipient_email (where the contact form emails go).
-
-Phone/email/address blocks in the right column and the map iframe should pull from
-**Global Settings**, not a separate copy.
-
-**Bugs found:**
-
-- Page heading says "**Conatct**" (typo) — fix to "Contact".
-- Breadcrumb "Home" link is `href="index.html"` — fix to `home_url()`.
-- Form `action="https://html.kodesolution.com/.../sendmail.php"` — this is the original
-  HTML-template vendor's demo endpoint. Must be replaced with a real WP handler (§6).
-- Email link points to a broken Cloudflare email-obfuscation snippet copied from the demo
-  — replace with a plain `mailto:` built from the Global Settings email field.
-
-### 4.5 Gallery — `gallery.php` (Template Name: "Gallary")
-
-Currently a near-empty stub (`<h1>Gallary</h1>`, no content). Full build needed.
-
-**Admin edit location:** Gallery Images (CPT list) — admin just uploads photos as
-`gallery_item` posts; no Settings API screen needed beyond maybe an optional intro
-heading/text if desired.
-
-**Front end:** simple `WP_Query` grid of all `gallery_item` posts, featured images in a
-lightbox (Fancybox is already enqueued in `inc/enqueue.php`, reuse it).
-
-**Bugs found:** page title typo "**Gallary**" → "Gallery" (fix the `Template Name` header text).
-
-### 4.6 Blog / News listing — `home.php`
-
-This is the automatic posts-index template (no `Template Name` header) — assign it as the
-site's "Posts page" in Settings → Reading.
-
-**Admin edit location:** none needed beyond writing normal Posts — this page is fully
-driven by standard WP Posts + Categories, no custom settings screen required.
-
-**Bugs found:**
-
-- `eschtml(home_url('/'))` — **`eschtml()` is not a real function**, this will throw a
-  fatal error. Fix to `esc_url(home_url('/'))`.
-- No `WP_Query`/`have_posts()` loop exists — the 6 "blog-post" cards are static demo
-  content; replace with a real Loop + `paginate_links()`.
-
-### 4.7 Single Post — `single.php`
-
-Currently a bare stub (`<h1>single post</h1>`). Build a standard single-post template:
-`the_title()`, post thumbnail, `the_content()`, categories/tags, `comments_template()` if
-comments are wanted. No custom admin screen needed — standard post editor is sufficient.
-
-### 4.8 Events archive — `archive-event.php`
-
-**Admin edit location:** Events (CPT list) to manage entries; page intro text
-(heading/breadcrumb) can stay static or move to a small "Events Page" Settings API screen
-if the admin wants to edit the intro copy — low priority, static is fine for v1.
-
-**Front end:** replace the 3 hardcoded `.event-block` cards with a `WP_Query( ['post_type'
-=> 'event', 'orderby' => 'meta_value', 'meta_key' => '_uk_mosque_event_date', 'order' =>
-'ASC'] )` loop, rendered via `template-parts/event/event-card.php` (shared with the
-homepage teaser).
-
-**Bugs found:** has a `Template Name` header conflicting with native archive routing — see
-§3 decision.
-
-### 4.9 Single Event — `single-event.php`
-
-**Admin edit location:** edit the individual Event post (Events → [event name]) — title,
-content, featured image, and the "Event Details" meta box fields from §3.1.
-
-**Front end changes needed:**
-
-- Replace hardcoded "About The Event" heading/paragraph with `the_title()` / `the_content()`.
-- Replace the 4-row details box (mislabeled "Events"/"Event Type"/"Date"/"Website") with
-  real values: Location, Event Type (or drop if not using taxonomy), Date (formatted from
-  `_uk_mosque_event_date`), Website.
-- "Donate Now" CTA is miscoped for an event — relabel to "Register"/"RSVP" or drop.
-- Prev/Next links → wire to `get_previous_post_link()` / `get_next_post_link()`.
-
-### 4.10 Donations/Causes archive — `archive-donation.php`
-
-**Admin edit location:** Causes (CPT list, `donation` post type) + Donation Category
-taxonomy terms (Causes → Categories).
-
-**Front end:** replace the 6 hardcoded `.causes-block` cards with a `WP_Query(['post_type'
-=> 'donation'])` loop through `template-parts/donation/donation-card.php`, which itself
-calls `donation-meta.php` (goal/raised numbers) and `donation-progress.php` (bar %). Same
-`Template Name` conflict as events — see §3.
-
-### 4.11 Single Donation/Cause — `single-donation.php`
-
-**Admin edit location:** edit the individual Cause post — title, content, excerpt,
-featured image, "Donation Details" meta box (§3.2), category terms.
-
-**Front end changes needed:**
-
-- Sidebar's 6 static "service" links should become a real loop over `donation_category`
-  terms (or sibling `donation` posts) via `get_terms()`.
-- "Donation Causes Overview" paragraphs → `the_content()`.
-- Donation form here is identical to the homepage one — extract to a shared
-  `template-parts/donation-form.php` partial once wired to a real handler (§6).
-
-### 4.12 Donation Category archive — `taxonomy-donation_category.php`
-
-Currently empty (0 bytes). Build using the same `donation-card.php` partial as
-`archive-donation.php`, filtered automatically by WordPress's taxonomy query — just loop
-`have_posts()` as normal within the taxonomy template.
-
-### 4.13 404 — `404.php`
-
-Mostly built already (message, image). Two fixes:
-
-- Search form isn't wired to WP search (no `name="s"` on the input) — replace with
-  `get_search_form()` or add `name="s"` and `action="<?php echo esc_url(home_url('/')); ?>"`.
-- "Back to Home" button `href="index.html"` → `home_url('/')`.
-
-**Admin edit location:** optional Theme Options → 404 Page screen for the heading/message
-text if the admin wants to customize the copy; otherwise leave static.
-
-### 4.14 Header & Footer — `header.php` / `footer.php`
-
-Not standalone pages, but rendered everywhere — pull entirely from **Global Settings**
-(§2) plus registered nav menus. Key fixes while rebuilding:
-
-- Logo: use `the_custom_logo()` (theme already declares `add_theme_support('custom-logo')`
-  in `inc/setup.php` but never calls it) or the Global Settings logo fields, not hardcoded
-  `<img src=".../logo.png">`.
-- Both header logos (`images/logo.png` in the sticky header, `images/logo-2.png` in the
-  mobile menu) are missing `get_template_directory_uri()` — currently broken paths.
-- Desktop/mobile nav: replace hardcoded `<ul>` with `wp_nav_menu()` against the registered
-  `primary`/`mobile` locations.
-- Header "Prayer Time" button currently links to `page-contact.html` — should link to the
-  real Prayer Times page via `get_permalink( get_page_by_path('prayer-times') )` or a
-  Theme Options field storing that page's ID.
-- Footer copyright: hardcode year → `date('Y')`; link → `home_url()`; site name → from
-  Global Settings or `get_bloginfo('name')`.
-- Footer newsletter form has no `action` — either wrap it into the same contact-handler
-  pattern (§6) with a "type: newsletter" flag, or integrate a real mailing-list API later;
-  don't leave it silently broken.
-
----
-
-## 5. Custom Fields UI approach (no ACF)
-
-For post meta boxes, use the plain pattern:
-
-```php
-add_action('add_meta_boxes', function () {
-    add_meta_box('uk_mosque_event_details', 'Event Details', 'uk_mosque_render_event_meta_box', 'event', 'normal', 'high');
-});
-
-function uk_mosque_render_event_meta_box($post) {
-    wp_nonce_field('uk_mosque_save_event_meta', 'uk_mosque_event_meta_nonce');
-    $date = get_post_meta($post->ID, '_uk_mosque_event_date', true);
-    // ... render <input> fields, one per field in §3.1
+<?php
+if (!defined('ABSPATH')) { exit; }
+
+/**
+ * Single read point for all theme options.
+ */
+function uk_mosque_get_option($key, $default = '')
+{
+    $value = get_theme_mod($key, $default);
+    return ($value === '' || $value === false) ? $default : $value;
 }
 
-add_action('save_post_event', function ($post_id) {
-    if (!isset($_POST['uk_mosque_event_meta_nonce']) ||
-        !wp_verify_nonce($_POST['uk_mosque_event_meta_nonce'], 'uk_mosque_save_event_meta')) return;
-    if (!current_user_can('edit_post', $post_id)) return;
-    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
+/**
+ * Format a money value in one place.
+ */
+function uk_mosque_money($amount)
+{
+    return '£' . number_format((float) $amount, 0);
+}
 
-    update_post_meta($post_id, '_uk_mosque_event_date', sanitize_text_field($_POST['event_date'] ?? ''));
-    // ... one update_post_meta() per field, each sanitized appropriately
-    // (sanitize_text_field for text, esc_url_raw for URLs, absint for numbers)
-});
+/**
+ * Standard page-title / breadcrumb banner used by every inner page.
+ *
+ * @param string $title  Heading text.
+ * @param array  $crumbs [ label => url ]  An empty url renders the label as plain text.
+ */
+function uk_mosque_page_banner($title, $crumbs = array())
+{
+    get_template_part('template-parts/global/page-banner', null, array(
+        'title'  => $title,
+        'crumbs' => $crumbs,
+    ));
+}
 ```
 
-For Theme Options screens, use the Settings API with **one array option per screen**
-(`uk_mosque_home_options`, etc.) so a single `register_setting()` + one sanitize callback
-covers the whole page:
+Then in `functions.php`, add **above** the other requires:
 
 ```php
-add_action('admin_menu', function () {
-    add_menu_page('Theme Options', 'Theme Options', 'manage_options', 'uk_mosque_options', 'uk_mosque_render_global_page', 'dashicons-admin-customizer');
-    add_submenu_page('uk_mosque_options', 'Global Settings', 'Global Settings', 'manage_options', 'uk_mosque_options', 'uk_mosque_render_global_page');
-    add_submenu_page('uk_mosque_options', 'Home Page', 'Home Page', 'manage_options', 'uk_mosque_home_options', 'uk_mosque_render_home_page');
-    add_submenu_page('uk_mosque_options', 'About Page', 'About Page', 'manage_options', 'uk_mosque_about_options', 'uk_mosque_render_about_page');
-    add_submenu_page('uk_mosque_options', 'Prayer Times', 'Prayer Times', 'manage_options', 'uk_mosque_prayer_times_options', 'uk_mosque_render_prayer_times_page');
-    add_submenu_page('uk_mosque_options', 'Contact Page', 'Contact Page', 'manage_options', 'uk_mosque_contact_options', 'uk_mosque_render_contact_page');
-});
+require_once get_template_directory() . '/inc/helpers.php';
 ```
 
-Each `uk_mosque_render_*_page()` outputs a form posting to `options.php` with
-`settings_fields('uk_mosque_{screen}_group')` + `do_settings_sections(...)`, standard
-Settings API boilerplate — no ACF, no third-party field builder.
+#### 1b. Delete `inc/theme-options.php`
+
+It is empty and unreferenced — see B.1.
+
+#### 1c. Build `template-parts/global/page-banner.php`
+
+Lift the `<section class="page-title">` markup that is currently copy-pasted into
+`archive-event.php`, `archive-donation.php`, `single-donation.php`, `home.php`,
+`page-about.php` and `page-prayer-times.php`. One partial, six call sites deleted.
+
+```php
+<?php
+$title  = $args['title'] ?? get_the_title();
+$crumbs = $args['crumbs'] ?? array();
+?>
+<section class="page-title">
+    <div class="ripple-image ripples z-0">
+        <img src="<?php echo esc_url(get_template_directory_uri() . '/assets/images/bg/page-title.jpg'); ?>" alt="">
+    </div>
+    <div class="auto-container">
+        <div class="title-outer text-center">
+            <div class="h1 title"><?php echo esc_html($title); ?></div>
+            <ul class="page-breadcrumb">
+                <li><a href="<?php echo esc_url(home_url('/')); ?>"><?php esc_html_e('Home', 'uk-mosque'); ?></a></li>
+                <?php foreach ($crumbs as $label => $url) : ?>
+                    <li>
+                        <?php if ($url) : ?>
+                            <a href="<?php echo esc_url($url); ?>"><?php echo esc_html($label); ?></a>
+                        <?php else : ?>
+                            <?php echo esc_html($label); ?>
+                        <?php endif; ?>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+    </div>
+</section>
+```
+
+#### 1d. Build a real `index.php`
+
+`index.php` is WordPress's universal fallback. Right now it prints `<h1> index.php page </h1>`,
+which is what visitors see on `/team/`, `/services/`, `/faqs/`, `/gallery/`, `/testimonial/`,
+and on any search results page. Make it a generic archive:
+
+- `uk_mosque_page_banner()` with a context-aware title (`get_the_archive_title()` /
+  `Search results for "…"` / site name)
+- standard `if (have_posts()) : while (have_posts()) : the_post();`
+- a simple card: featured image, title linked to permalink, date, excerpt
+- `the_posts_pagination()` at the bottom
+- an `else:` branch with a "nothing found" message and `get_search_form()`
+
+#### 1e. Build a real `single.php`
+
+- banner with the post title
+- featured image, `the_content()`, `wp_link_pages()`
+- post meta (date, author, categories, tags)
+- `the_post_navigation()`
+- `comments_template()` guarded by `if (comments_open() || get_comments_number())`
+
+#### 1f. Fill `taxonomy-donation_category.php`
+
+Currently 0 bytes — WordPress loads it and outputs nothing. Either delete the file (so the
+`archive.php` → `index.php` fallback runs) **or** fill it. Filling it is better; it reuses the
+donation card you build in Step 5:
+
+```php
+<?php
+if (!defined('ABSPATH')) { exit; }
+get_header();
+
+$term = get_queried_object();
+uk_mosque_page_banner(
+    $term->name,
+    array(
+        __('Causes', 'uk-mosque') => get_post_type_archive_link('donation'),
+        $term->name               => '',
+    )
+);
+?>
+<section class="our-causes pt-120 pb-90">
+    <div class="container">
+        <div class="row">
+            <?php if (have_posts()) : while (have_posts()) : the_post(); ?>
+                <?php get_template_part('template-parts/donation/donation-card'); ?>
+            <?php endwhile; else : ?>
+                <p><?php esc_html_e('No causes in this category yet.', 'uk-mosque'); ?></p>
+            <?php endif; ?>
+        </div>
+        <?php the_posts_pagination(); ?>
+    </div>
+</section>
+<?php get_footer();
+```
+
+#### 1g. Add `searchform.php`
+
+`index.php`, `404.php` and the sidebar all need it. Small file, unblocks three others.
+
+**Exit criteria:** visit `/`, `/events/`, `/causes/`, `/team/`, `/services/`, `/faqs/`,
+`/gallery/`, `/testimonial/`, `/?s=test`, and any single post — none show a stub heading or a
+blank page.
 
 ---
 
-## 6. Forms that need real handlers
+### Step 2 — Decide the fate of the 5 orphan CPT archives (Blocker)
 
-Three forms exist across templates and none of them currently submit anywhere real:
+`team_member`, `testimonial`, `service`, `faq` and `gallery_item` are all registered
+`'public' => true, 'has_archive' => true`. That creates 10 public URLs (5 archives + 5 single
+templates) that nothing links to and that you have no designs for.
 
-1. **Contact form** (contact.php + front-page.php contact section) — currently posts to
-   the original HTML template vendor's demo URL. Build a single handler: `admin-post.php`
-   action `uk_mosque_contact_submit`, verify a nonce, sanitize fields, `wp_mail()` to the
-   `form_recipient_email` set in Theme Options → Contact Page, redirect back with a
-   success/error query var.
-2. **Donation form** (front-page.php + single-donation.php) — no `action` at all. This
-   needs a real payment gateway (Stripe/PayPal/etc.) to actually take money — that's a
-   larger scope decision than plain form handling. For v1, treat as out of scope beyond
-   wiring the amount buttons in JS (already present) and stub the submit to email an
-   intent/lead, OR flag explicitly to the client that payment processing is a separate
-   phase requiring a gateway account and PCI-relevant decisions.
-3. **Footer newsletter form** — no `action`. Either point it at the same
-   `admin-post.php` contact handler (tagged as "newsletter" type) storing signups as a
-   simple custom table/CPT, or integrate a real ESP (Mailchimp etc.) later.
+Two valid answers — pick per CPT, do not leave it ambiguous:
 
-Don't build fake/silent success states — every form must either really work or visibly
-say "coming soon" until wired up.
+| CPT | Recommendation | Why |
+| --- | --- | --- |
+| `gallery_item` | **Keep archive** → build `archive-gallery_item.php` | It is the gallery page (Step 9) |
+| `service` | **Keep archive + single** | The design has "Service Details" pages (`page-service-details.html` in the static markup) |
+| `team_member` | **Keep archive + single** | The design has `page-team-details.html` |
+| `testimonial` | **Turn off:** `'public' => false, 'publicly_queryable' => false, 'has_archive' => false, 'show_ui' => true` | Testimonials only ever appear embedded in other pages |
+| `faq` | **Turn off** (same flags) | FAQs only appear as accordions inside Home + About |
 
----
+After changing any `public` / `has_archive` / `rewrite` value, **visit Settings → Permalinks**
+once to flush rewrite rules. Nothing works until you do.
 
-## 7. Known bugs to fix while building (collected from §4, for a quick checklist)
-
-- [ ] `home.php`: `eschtml()` typo → fatal-error risk, fix to `esc_url()`.
-- [ ] `page-prayer-times.php`: banner heading/breadcrumb say "About" instead of "Prayer Times".
-- [ ] `contact.php`: page heading typo "Conatct" → "Contact".
-- [ ] `contact.php`: form posts to the demo vendor's external URL.
-- [ ] `contact.php` / footer.php: broken Cloudflare-obfuscated email links.
-- [ ] `gallery.php`: `Template Name: Gallary` typo → "Gallery".
-- [ ] header.php: both logo `<img>` paths missing `get_template_directory_uri()`.
-- [ ] header.php: no nav menu registered despite hardcoded nav markup.
-- [ ] header.php: "Prayer Time" button links to `page-contact.html`.
-- [ ] footer.php: hardcoded `© 2026`, `href="index.html"`, and all social/quick links `href="#"`.
-- [ ] Several breadcrumbs use `href="#"` or `href="index.html"` instead of `home_url()`
-      (page-about.php, page-prayer-times.php, archive-donation.php).
-- [ ] `archive-event.php` / `archive-donation.php`: `Template Name` header conflicts with
-      native CPT archive routing — pick one approach (§3).
-- [ ] `404.php`: search input has no `name="s"`, doesn't actually search.
-- [ ] `single.php`: stub only, no title/content output.
-- [ ] `taxonomy-donation_category.php`: empty file.
-- [ ] `template-parts/donation/*.php`: all 3 files empty.
-- [ ] `inc/theme-options.php`: never `require_once`'d in `functions.php`.
+For the CPTs you keep public, the `index.php` from Step 1 is an acceptable v1 archive. Build
+dedicated templates only where the design calls for it.
 
 ---
 
-## 8. Suggested build order
+### Step 3 — Expand the Customizer (Core)
 
-1. **Foundations:** `inc/custom-post-type.php` (all 7 CPTs), `inc/custom-texanomy.php`
-   (`donation_category`), nav menu registration in `inc/setup.php`, `inc/theme-options.php`
-   skeleton + `require_once` in `functions.php`, `inc/helpers.php` getters.
-2. **Global Settings screen** + rewire header.php/footer.php to it (fixes the logo/nav/social/copyright bugs in one pass).
-3. **Prayer Times screen** + `template-parts/prayer-times.php`, used by
-   page-prayer-times.php, page-about.php, front-page.php.
-4. **Event CPT end-to-end:** meta box → `template-parts/event/event-card.php` →
-   archive-event.php loop → single-event.php real fields.
-5. **Donation CPT + taxonomy end-to-end:** meta box → the 3 `template-parts/donation/*`
-   partials → archive-donation.php loop → single-donation.php → taxonomy-donation_category.php.
-6. **Team / Testimonial / Service / FAQ CPTs** + their loops on front-page.php and
-   page-about.php (services/FAQ).
-7. **Home Page / About Page / Contact Page Settings screens** for the remaining static text sections.
-8. **Gallery** (CPT + gallery.php grid), **Blog loop** (home.php), **single.php**, **404.php** fixes.
-9. **Forms:** contact handler via `admin-post.php` + `wp_mail()`; decide donation-form/payment scope; newsletter handler or defer.
-10. Bug checklist in §7 — sweep for anything missed.
+Add these sections to `inc/customizer.php`, following the pattern already there.
+Register a `sanitize_callback` on **every** setting — a missing one is a security hole.
+
+#### 3a. Panel restructure
+
+You will be past 40 settings. Group them:
+
+```php
+$wp_customize->add_panel('uk_mosque_theme_options', array(
+    'title'    => __('Theme Options', 'uk-mosque'),
+    'priority' => 25,
+));
+```
+
+…then add `'panel' => 'uk_mosque_theme_options'` to each `add_section()` call, including the
+two existing ones.
+
+#### 3b. New sections and fields
+
+| Section | Setting | Control | Sanitize |
+| --- | --- | --- | --- |
+| **Prayer Times** | `prayer_fajr_azan`, `prayer_fajr_iqamah` | text | `sanitize_text_field` |
+| | …repeat for `dhuhr`, `asr`, `maghrib`, `isha`, `jummah` | text | `sanitize_text_field` |
+| | `prayer_sunrise` | text | `sanitize_text_field` |
+| | `prayer_note` | textarea | `sanitize_textarea_field` |
+| **Home Page** | `home_hero_subtitle`, `home_hero_title`, `home_hero_text` | text/textarea | text/textarea |
+| | `home_hero_btn_text`, `home_hero_btn_url` | text / url | text / `esc_url_raw` |
+| | `home_about_subtitle`, `home_about_title`, `home_about_text` | text/textarea | |
+| | `home_causes_subtitle`, `home_causes_title` | text | |
+| | `home_services_subtitle`, `home_services_title` | text | |
+| | `home_events_subtitle`, `home_events_title` | text | |
+| | `home_team_subtitle`, `home_team_title` | text | |
+| | `home_faq_subtitle`, `home_faq_title` | text | |
+| | `home_testimonial_subtitle`, `home_testimonial_title` | text | |
+| | `home_blog_subtitle`, `home_blog_title` | text | |
+| | `home_counter_1_number` … `_4_number` / `_label` | number / text | `absint` / text |
+| **About Page** | `about_intro_title`, `about_intro_text` | text/textarea | |
+| | `about_mission_title`, `about_mission_text` | text/textarea | |
+| | `about_vision_title`, `about_vision_text` | text/textarea | |
+| **Contact Page** | `contact_form_recipient` | email | `sanitize_email` |
+| | `contact_map_embed` | textarea | see note below |
+| | `contact_opening_hours` | textarea | `sanitize_textarea_field` |
+| **Footer** | `footer_copyright` | text | `sanitize_text_field` |
+| | `footer_newsletter_title`, `footer_newsletter_text` | text/textarea | |
+| **Social** (existing) | add `mosque_whatsapp`, `mosque_tiktok` | url | `esc_url_raw` |
+
+> **Map embed note:** `wp_kses_post` strips `<iframe>`. Either store just the place name or
+> lat/long and build the iframe yourself in the template (safest, recommended), or write a
+> custom sanitizer that whitelists a Google-Maps-only iframe. Do not use a raw passthrough.
+
+#### 3c. Register nav menu locations
+
+In `inc/setup.php`, extend `register_nav_menus()`:
+
+```php
+register_nav_menus(array(
+    'primary_menu' => __('Primary Menu', 'uk-mosque'),
+    'footer_menu'  => __('Footer Quick Links', 'uk-mosque'),
+));
+```
+
+The mobile and sticky menus are cloned from the primary menu by
+[script.js:113-117](assets/js/script.js#L113-L117) — they need no separate location.
+
+---
+
+### Step 4 — Prayer times partial (Core)
+
+Three templates render the same prayer table: `front-page.php` (Time Section, around line 342),
+`page-about.php`, and `page-prayer-times.php`. Build it once.
+
+1. Create `template-parts/global/prayer-times.php`.
+2. Copy the markup from `front-page.php` lines ~342–495.
+3. Replace every hardcoded time with `uk_mosque_get_option('prayer_fajr_azan')` and friends.
+4. Loop over a `$prayers` array rather than repeating the block six times:
+
+```php
+$prayers = array(
+    'fajr'    => __('Fajr', 'uk-mosque'),
+    'dhuhr'   => __('Dhuhr', 'uk-mosque'),
+    'asr'     => __('Asr', 'uk-mosque'),
+    'maghrib' => __('Maghrib', 'uk-mosque'),
+    'isha'    => __('Isha', 'uk-mosque'),
+    'jummah'  => __('Jummah', 'uk-mosque'),
+);
+
+foreach ($prayers as $key => $label) {
+    $azan   = uk_mosque_get_option("prayer_{$key}_azan");
+    $iqamah = uk_mosque_get_option("prayer_{$key}_iqamah");
+    // render one row
+}
+```
+
+5. Replace the block in all three templates with
+   `get_template_part('template-parts/global/prayer-times');`
+
+---
+
+### Step 5 — Donation front-end, finished (Core)
+
+#### 5a. Fill the three empty partials
+
+`template-parts/donation/donation-progress.php` — expects `$args['goal']` and `$args['raised']`:
+
+```php
+<?php
+$goal   = (float) ($args['goal'] ?? 0);
+$raised = (float) ($args['raised'] ?? 0);
+$pct    = $goal > 0 ? min(100, round(($raised / $goal) * 100)) : 0;
+?>
+<div class="progress-box">
+    <div class="bar"><div class="bar-inner" style="width: <?php echo esc_attr($pct); ?>%"></div></div>
+    <div class="progress-meta">
+        <span class="raised"><?php echo esc_html(uk_mosque_money($raised)); ?></span>
+        <span class="goal"><?php echo esc_html(uk_mosque_money($goal)); ?></span>
+    </div>
+</div>
+```
+
+`donation-meta.php` — renders the category term, start/end dates, and days remaining.
+
+`donation-card.php` — the grid card. Move the markup currently inlined in
+`archive-donation.php` lines ~90–140 into here, then have the archive call
+`get_template_part('template-parts/donation/donation-card')` inside its loop.
+
+#### 5b. Rewrite `single-donation.php`
+
+It is currently static markup with a fake sidebar of `page-service-details.html` links.
+Replace with:
+
+- `while (have_posts()) : the_post();`
+- banner: `the_title()`, crumbs Home → Causes → title
+- featured image, `the_content()`
+- progress partial + meta partial using the real `_donation_goal_amount` /
+  `_donation_raised_amount`
+- sidebar: a real `wp_list_categories(array('taxonomy' => 'donation_category'))`, plus an
+  "Other causes" `WP_Query` (3 posts, `post__not_in` the current one)
+- a **Donate** button pointing at a `#` placeholder with a clear TODO comment referencing
+  decision B.3
+
+#### 5c. Add pagination to the archives
+
+In `archive-donation.php`, change `'posts_per_page' => -1` to `9`, add
+`'paged' => max(1, get_query_var('paged'))`, and call `paginate_links()` after the loop.
+Better still: drop the custom `WP_Query` entirely and use the main loop, since it is an
+archive template. Same for `archive-event.php`.
+
+---
+
+### Step 6 — Donation metabox gaps (Important)
+
+- Add a **hover image** field (`_donation_hover_image`) if the design's card hover swap is
+  wanted. Needs `wp_enqueue_media()` on the donation edit screen plus a small uploader script.
+  If you would rather not, delete the requirement from the old spec so it stops resurfacing.
+- Consider making `_donation_raised_amount` read-only / automatic once a gateway exists (B.3).
+
+---
+
+### Step 7 — Home page (Core)
+
+This is the biggest single job: `front-page.php` is **1498 lines of static markup with zero
+queries**. Do it section by section, testing after each — do not attempt it in one pass.
+
+| Order | Section | Line (approx) | Wire to |
+| --- | --- | --- | --- |
+| 1 | Banner | 21–72 | Customizer `home_hero_*` |
+| 2 | About | 76–189 | Customizer `home_about_*` + counters |
+| 3 | Causes | 193–339 | `WP_Query` on `donation`, 3 posts → `donation-card.php` |
+| 4 | Time | 342–495 | `template-parts/global/prayer-times.php` (Step 4) |
+| 5 | Service | 500–643 | `WP_Query` on `service`, 4 posts |
+| 6 | Event | 646–756 | `WP_Query` on `event`, 3 upcoming (see below) |
+| 7 | Team | 798–911 | `WP_Query` on `team_member`, 4 posts + `team_role` term + socials |
+| 8 | Donation CTA | 912–986 | Customizer text + link to `/causes/` |
+| 9 | FAQ | 989–1095 | `WP_Query` on `faq` → accordion, title = question, content = answer |
+| 10 | Testimonial | 1096–1278 | `WP_Query` on `testimonial` + role + rating stars |
+| 11 | Blog | 1279–1396 | `WP_Query` on `post`, 3 latest |
+| 12 | Contact | 1399–1495 | Customizer contact fields + the Step 11 form |
+
+**Upcoming-events query** — reuse it in the events archive too, so put it in `inc/helpers.php`:
+
+```php
+function uk_mosque_upcoming_events($limit = 3)
+{
+    return new WP_Query(array(
+        'post_type'      => 'event',
+        'posts_per_page' => $limit,
+        'meta_key'       => '_event_date',
+        'orderby'        => 'meta_value',
+        'order'          => 'ASC',
+        'meta_query'     => array(
+            array(
+                'key'     => '_event_date',
+                'value'   => current_time('Y-m-d'),
+                'compare' => '>=',
+                'type'    => 'DATE',
+            ),
+        ),
+    ));
+}
+```
+
+**Also fix while you are in there:**
+
+- Lines 194, 616, 617, 628 — `src="images/…"` with no `get_template_directory_uri()`. Broken
+  on every page load.
+- 31 `*.html` links (`page-about.html`, `page-service-details.html`, `page-team-details.html`,
+  `page-event-details.html`, `page-contact.html`) → `get_permalink()` / `home_url()`.
+- The `__cf_email__` Cloudflare-obfuscated email span — replace with a real `mailto:`.
+
+**Build one card partial per CPT** as you go, so Home and the archives share markup:
+`template-parts/event/event-card.php`, `service/service-card.php`, `team/team-card.php`,
+`testimonial/testimonial-card.php`, `faq/faq-item.php`, `post/post-card.php`.
+
+---
+
+### Step 8 — Blog index (`home.php`) (Core)
+
+Currently six hardcoded cards. Replace with:
+
+- `uk_mosque_page_banner()` — this also fixes the broken `src="images/bg/page-title.jpg"` on
+  [home.php:19](home.php#L19) and the `esc_html(home_url())` inside an `href` on
+  [home.php:25](home.php#L25), which should be `esc_url()`
+- the main Loop → `template-parts/post/post-card.php` (built in Step 7)
+- a real category tag (`get_the_category()`), real date (`get_the_date()`) and real permalink —
+  the 12 `news-details.html` links all go
+- `the_posts_pagination()`
+- an empty state
+
+---
+
+### Step 9 — Gallery (Important)
+
+1. Rename the template header: `Template Name: Gallary` → `Gallery` in
+   [gallery.php:4](gallery.php#L4).
+2. Build the grid: `WP_Query` on `gallery_item`, featured image, Fancybox lightbox
+   (`data-fancybox="gallery"` plus an `href` to the full-size image URL — the library is
+   already enqueued).
+3. Consider `archive-gallery_item.php` as a thin wrapper that reuses the same partial, so
+   `/gallery/` and the page template both work.
+4. Optional: add a `gallery_category` taxonomy plus MixItUp filter buttons (`mixitup.js` is
+   already enqueued). Skip for v1 unless the client asks.
+
+---
+
+### Step 10 — About, Prayer Times and Contact pages (Important)
+
+**`page-about.php`** — wire intro / mission / vision / counters to the Customizer; swap the
+static services and FAQ blocks for the Step 7 partials; fix the `page-about.html` link at
+[page-about.php:100](page-about.php#L100) and the four `page-service-details.html` links.
+
+**`page-prayer-times.php`** — three fixes plus one swap:
+
+- The heading says **"About"** — it should say "Prayer Times"
+- The breadcrumb says **"About"** and links `href="#"` — it should be the page title and `home_url()`
+- Replace the static table with `get_template_part('template-parts/global/prayer-times')`
+- Easiest fix for the first two: just call `uk_mosque_page_banner(get_the_title())`
+
+**`contact.php`**
+
+- Typo: **"Conatct"** → "Contact" at [contact.php:25](contact.php#L25) and
+  [contact.php:28](contact.php#L28)
+- The form `action` points at `https://html.kodesolution.com/.../sendmail.php` — the theme
+  vendor's demo server. Every submission currently goes to a third party. **Fix in Step 11.**
+- Replace the `__cf_email__` span with a real `mailto:` from
+  `uk_mosque_get_option('mosque_email')`
+- Wire the map to `contact_map_embed`
+
+---
+
+### Step 11 — Forms (Core)
+
+#### 11a. Contact form handler
+
+New file `inc/form-handlers.php`, required from `functions.php`.
+
+```php
+add_action('admin_post_nopriv_uk_mosque_contact', 'uk_mosque_handle_contact');
+add_action('admin_post_uk_mosque_contact', 'uk_mosque_handle_contact');
+
+function uk_mosque_handle_contact()
+{
+    check_admin_referer('uk_mosque_contact', 'uk_mosque_contact_nonce');
+
+    // Honeypot — bots fill hidden fields, humans do not.
+    if (!empty($_POST['form_botcheck'])) {
+        wp_safe_redirect(add_query_arg('contact', 'sent', wp_get_referer()));
+        exit;
+    }
+
+    $name    = sanitize_text_field($_POST['form_name'] ?? '');
+    $email   = sanitize_email($_POST['form_email'] ?? '');
+    $subject = sanitize_text_field($_POST['form_subject'] ?? '');
+    $message = sanitize_textarea_field($_POST['form_message'] ?? '');
+
+    if (!$name || !is_email($email) || !$message) {
+        wp_safe_redirect(add_query_arg('contact', 'invalid', wp_get_referer()));
+        exit;
+    }
+
+    $to = uk_mosque_get_option('contact_form_recipient', get_option('admin_email'));
+
+    $ok = wp_mail(
+        $to,
+        sprintf('[%s] %s', get_bloginfo('name'), $subject ?: __('Website enquiry', 'uk-mosque')),
+        $message,
+        array(
+            'Content-Type: text/plain; charset=UTF-8',
+            'Reply-To: ' . $name . ' <' . $email . '>',
+        )
+    );
+
+    wp_safe_redirect(add_query_arg('contact', $ok ? 'sent' : 'error', wp_get_referer()));
+    exit;
+}
+```
+
+In `contact.php`, change the form to:
+
+```php
+<form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
+    <input type="hidden" name="action" value="uk_mosque_contact">
+    <?php wp_nonce_field('uk_mosque_contact', 'uk_mosque_contact_nonce'); ?>
+    <!-- existing fields -->
+</form>
+```
+
+…and render a success/error notice from `$_GET['contact']` above the form.
+
+> **Deliverability:** `wp_mail()` on a Laragon or shared host usually lands in spam or fails
+> silently. Before launch, install an SMTP plugin (WP Mail SMTP, Post SMTP) or the client's
+> transactional provider. Test with a real inbox, not just "no PHP error".
+
+#### 11b. Newsletter form
+
+[footer.php:44-62](footer.php#L44-L62) — the input has no `name`, no `<form>`, no action.
+Three options; pick one and do it properly:
+
+1. Route it through the same handler with a `type=newsletter` flag and email the admin.
+2. Point it at Mailchimp's or Brevo's hosted form endpoint.
+3. Remove the block until the client picks an ESP.
+
+Leaving a form that silently does nothing is the one option that is not acceptable.
+
+#### 11c. Donation form
+
+See B.3. Out of scope for v1.
+
+---
+
+### Step 12 — Comments and sidebar (Important)
+
+- `comments.php` — needed by `single.php`. Alternatively disable comments theme-wide if the
+  mosque does not want them (drop `comments` from `supports`, plus a `comments_open` filter).
+- `sidebar.php` plus `register_sidebar()` in `inc/setup.php` — only if the blog design has one.
+  Check the static HTML before building it.
+
+---
+
+### Step 13 — Performance and housekeeping (Polish)
+
+- **`three.js` is 1.8 MB and loads on every page.** It is only used by `distortion-img.js`.
+  Conditionally enqueue it, or drop the effect. This is the single biggest win on the site.
+- Same for `jquery-ui.js` (520 KB) and `jquery.fancybox.js` (154 KB) — load Fancybox only on
+  the gallery, jQuery UI only where a datepicker actually runs.
+- Use WordPress's bundled jQuery (`wp_enqueue_script('jquery')`) instead of shipping your own,
+  or at minimum register yours under the `jquery` handle so dependencies resolve. Note that
+  `theme-script` declares `array('jquery')` as a dependency while the theme enqueues its copy
+  under the handle `enq-jquery` — so core jQuery loads **as well**. Two jQueries on every page.
+- Delete `assets/css/style.css.backup-20260825-133007` (it is untracked; git is the backup).
+- `style.css` says `Tested up to: 5.4` — bump it.
+- Add `load_theme_textdomain('uk-mosque', get_template_directory() . '/languages')` to
+  `inc/setup.php`; the `__()` calls currently do nothing.
+- Add `add_theme_support('automatic-feed-links')` and `add_theme_support('responsive-embeds')`.
+
+---
+
+### Step 14 — Final bug sweep (Polish)
+
+Run through these once the steps above are done — most will already be fixed.
+
+| File | Issue |
+| --- | --- |
+| [404.php:32](404.php#L32) | Search input missing `name="s"` — the form can never work |
+| [404.php:36](404.php#L36) | "Back to Home" points at `index.html`, should be `home_url('/')` |
+| [header.php:82](header.php#L82) | Address widget links to `page-contact.html` |
+| [header.php:135](header.php#L135) | `__cf_email__` obfuscation span with an empty `data-cfemail` |
+| [footer.php:76-80](footer.php#L76-L80) | 5 Quick Links all `href="#"` → use `wp_nav_menu('footer_menu')` |
+| [footer.php:61](footer.php#L61) | Privacy policy `href="#"` → `get_privacy_policy_url()` |
+| [footer.php:144](footer.php#L144) | Hardcoded "© 2026 Islamus" → `footer_copyright` + `date('Y')` + `bloginfo('name')` |
+| [footer.php:10](footer.php#L10) | `esc_html(home_url('/'))` inside an `href` → `esc_url()` |
+| [home.php:25](home.php#L25) | Same `esc_html`-in-`href` bug |
+| `front-page.php` | 4 `src="images/…"` paths missing the theme URI |
+| all | Audit remaining `esc_html` on URLs: `grep -n 'href="<?php echo esc_html' *.php` |
+
+Also run once at the end:
+
+- Settings → Permalinks (flush rewrites after all the CPT changes)
+- Set `WP_DEBUG = true` in `wp-config.php` and walk every page, looking for notices
+- Theme Check plugin
+- Test with **zero content** in every CPT — every loop needs a working `else:` branch
+
+---
+
+## Part D — Suggested milestones
+
+| Milestone | Steps | Outcome |
+| --- | --- | --- |
+| **M1 — No broken routes** | 1, 2 | Every URL renders something real. Safe to show the client. |
+| **M2 — Content model live** | 3, 4, 5, 6 | Admin can edit prayer times and causes; donations fully working |
+| **M3 — Home page** | 7 | The marketing page is real. Biggest visible jump. |
+| **M4 — Remaining pages** | 8, 9, 10 | Blog, gallery, about, prayer times and contact all dynamic |
+| **M5 — Forms** | 11, 12 | The site can receive enquiries |
+| **M6 — Launch prep** | 13, 14 | Performance, i18n, bug sweep |
+
+---
+
+## Part E — Conventions to keep
+
+Carried over from the existing code — stay consistent with them.
+
+- **Escaping:** `esc_html()` for text, `esc_attr()` for attributes, `esc_url()` for URLs,
+  `wp_kses_post()` for rich text. Never `esc_html()` on an `href`.
+- **Text domain:** `uk-mosque` on every user-facing string.
+- **Meta prefix:** `_` + `{cpt}_` + `{field}`, e.g. `_event_location`. The leading `_` keeps the
+  field out of the default custom-fields box.
+- **Nonces:** on every metabox save and every form submission. Check
+  `defined('DOING_AUTOSAVE')` and `current_user_can()` in save handlers — the existing handlers
+  in `inc/custom-metabox.php` are the pattern to copy.
+- **File guard:** `if (!defined('ABSPATH')) { exit; }` at the top of every PHP file.
+- **Loops:** always `wp_reset_postdata()` after a custom `WP_Query`.
+- **Partials:** if markup appears twice, it becomes a `template-parts/` file.

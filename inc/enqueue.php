@@ -10,8 +10,32 @@ function uk_mosque_enqueue_scripts()
 
     // enqueue styles start from here 
 
-    wp_enqueue_style('enq-bootstrap', get_template_directory_uri() . '/assets/css/bootstrap.min.css', array(), $version);
-    wp_enqueue_style('enq-style', get_template_directory_uri() . '/assets/css/style.css', array(), $version);
+    wp_enqueue_style('enq-fonts', 'https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap', array(), null);
+
+    // Vendor and theme stylesheets, in cascade order. Each depends on the one
+    // before it so WordPress always prints them in exactly this sequence.
+    $styles = array(
+        'enq-bootstrap'        => 'bootstrap.min.css',
+        'enq-animate'          => 'animate.css',
+        'enq-aos'              => 'aos.css',
+        'enq-swiper'           => 'swiper.min.css',
+        'enq-fancybox'         => 'jquery.fancybox.min.css',
+        'enq-jquery-ui'        => 'jquery-ui.css',
+        'enq-linear'           => 'linear.css',
+        'enq-select2'          => 'select2.min.css',
+        'enq-fontawesome-free' => 'fontawesome-free.css',
+        'enq-fontawesome'      => 'fontawesome.css',
+        'enq-flaticon'         => 'flaticon-digitaal.css',
+        'enq-tm-bs-mp'         => 'tm-bs-mp.css',
+        'enq-tm-utility'       => 'tm-utility-classes.css',
+        'enq-style'            => 'style.css',
+    );
+
+    $previous = array();
+    foreach ($styles as $handle => $file) {
+        wp_enqueue_style($handle, get_template_directory_uri() . '/assets/css/' . $file, $previous, $version);
+        $previous = array($handle);
+    }
 
     // enqueue styles ends here 
 

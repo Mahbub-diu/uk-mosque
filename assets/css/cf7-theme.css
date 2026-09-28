@@ -1,0 +1,73 @@
+/**
+ * Contact Form 7 — align plugin output with the theme's form design.
+ */
+
+/* CF7 wraps every field in an inline <span>; make it transparent to layout
+   so .form-control keeps its full width and .mb-3 spacing stays accurate. */
+.wpcf7-form .wpcf7-form-control-wrap {
+    display: block;
+}
+
+/* Inline validation message under a field. */
+.wpcf7-form .wpcf7-not-valid-tip {
+    color: #d63638;
+    display: block;
+    font-size: 14px;
+    line-height: 1.4;
+    margin-top: 6px;
+}
+
+.wpcf7-form .wpcf7-form-control.wpcf7-not-valid {
+    border-color: #d63638;
+}
+
+/* The status message below the form. */
+.wpcf7-form .wpcf7-response-output {
+    border-radius: 8px;
+    border-width: 1px;
+    font-size: 15px;
+    margin: 0 0 10px;
+    padding: 12px 18px;
+}
+
+.wpcf7-form.sent .wpcf7-response-output {
+    background-color: rgba(70, 180, 80, 0.08);
+    border-color: #46b450;
+    color: #2a6b31;
+}
+
+.wpcf7-form.invalid .wpcf7-response-output,
+.wpcf7-form.failed .wpcf7-response-output,
+.wpcf7-form.aborted .wpcf7-response-output {
+    background-color: rgba(214, 54, 56, 0.08);
+    border-color: #d63638;
+    color: #a32224;
+}
+
+.wpcf7-form.spam .wpcf7-response-output,
+.wpcf7-form.unaccepted .wpcf7-response-output,
+.wpcf7-form.payment-required .wpcf7-response-output {
+    background-color: rgba(255, 185, 0, 0.1);
+    border-color: #ffb900;
+    color: #8a6100;
+}
+
+/* Submitting spinner sits next to the buttons rather than on its own line. */
+.wpcf7-form .wpcf7-spinner {
+    margin: 0 0 0 12px;
+    vertical-align: middle;
+}
+
+/* The buttons are real <button> elements so the theme's arrow spans work;
+   strip the default UA button chrome. */
+.wpcf7-form button.theme-btn {
+    background-image: none;
+    border: 0;
+    cursor: pointer;
+    font: inherit;
+}
+
+.wpcf7-form button.theme-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
